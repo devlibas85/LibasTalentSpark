@@ -2,6 +2,9 @@
 import { useEffect } from 'react'
 import './App.css'
 import { getHealth } from './api/health'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login ';
+import Register from './pages/Register';
 
 function App() {
 
@@ -10,10 +13,11 @@ function App() {
   },[]);
  
   return (
-    <>
-    <p>LIBAS TALENT SPARK</p>
-     <p>Check console for backend health </p>
-    </>
+     <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
   )
 }
 
