@@ -1,12 +1,15 @@
+import DashboardLayout from "../layouts/DashboardLayout";
 import HRDashboard from "./hr/HRDashboard";
 import EmployeeDashboard from "./employee/EmployeeDashboard";
 
 export default function Dashboard() {
-  const role = localStorage.getItem("user_role");
+  const roleFromStorage = localStorage.getItem("user_role");
 
-  if (role === "HR") {
-    return <HRDashboard />;
-  }
+  const role = roleFromStorage === "HR" ? "hr" : "employee";
 
-  return <EmployeeDashboard />;
+  return (
+    <DashboardLayout role={role}>
+      {role === "hr" ? <HRDashboard /> : <EmployeeDashboard />}
+    </DashboardLayout>
+  );
 }
