@@ -4,11 +4,13 @@ import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
+  
 
-  const handleMicrosoftLogin = () => {
-    setIsLoading(true);
-    window.location.href = "http://localhost:4000/auth/microsoft";
-  };
+const handleMicrosoftLogin = () => {
+  setIsLoading(true);
+  window.location.href = "http://localhost:4000/auth/microsoft";
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-2 overflow-hidden">

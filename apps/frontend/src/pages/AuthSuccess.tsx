@@ -1,24 +1,44 @@
+import { jwtDecode } from "jwt-decode";
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+
+
+type DecodedToken = {
+  email: string;
+  name: string;
+  role: "HR" | "EMPLOYEE";
+  iat?: number;
+  exp?: number;
+};
 
 export default function AuthSuccess() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const tokenFromUrl = params.get("token");
 
-    if (!token) {
-      navigate("/login");
+    // ✅ If token exists in URL → first login
+    if (tokenFromUrl) {
+      const decoded = jwtDecode<DecodedToken>(tokenFromUrl);
+
+      localStorage.setItem("auth_token", tokenFromUrl);
+      localStorage.setItem("user_role", decoded.role);
+
+      navigate("/dashboard", { replace: true });
       return;
     }
 
-   
-    localStorage.setItem("auth_token", token);
+    // ✅ If already logged in (StrictMode second mount)
+    const existingToken = localStorage.getItem("auth_token");
+    if (existingToken) {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
 
-    
-    navigate("/dashboard");
+    // ❌ Only redirect if truly unauthenticated
+    navigate("/login", { replace: true });
   }, [navigate]);
 
   return (

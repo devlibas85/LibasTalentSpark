@@ -18,7 +18,7 @@ function App() {
   return (
      <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="*" element={<Navigate to="/login" />} />
+    
       <Route path="/auth/success" element={<AuthSuccess />} />
 <Route
   path="/dashboard"
@@ -28,6 +28,7 @@ function App() {
     </ProtectedRoute>
   }
 />
+  <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
   )
 }
