@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react'
-import './App.css'
+
 import { getHealth } from './api/health'
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login ';

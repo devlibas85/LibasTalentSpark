@@ -13,10 +13,15 @@ function Login() {
   return (
     <div style={{ padding: 32, maxWidth: 400, margin: 'auto' }}>
       <h2>Login</h2>
-
+<div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <h1 className="text-3xl font-bold text-red-600">
+        Tailwind is working 🔥
+      </h1>
+    </div>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
+
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
