@@ -1,42 +1,64 @@
-import express from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
+import passport from "passport";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env.js";
 
 const router = express.Router();
 
 /**
- * ENTRY POINT — SAME ROUTE
- * Frontend always hits this
+ * Start Microsoft login
  */
-router.get("/microsoft", (req, res) => {
-  return res.redirect("/auth/microsoft/mock");
-});
+router.get(
+  "/microsoft",
+  passport.authenticate("azuread-openidconnect")
+);
 
 /**
- * MOCK AUTH — BACKEND IS SOURCE OF TRUTH
+ * Microsoft callback
  */
-router.get("/microsoft/mock", (req, res) => {
-  const mockUser =
-    process.env.MOCK_ROLE === "HR"
-      ? {
-          email: "hr.user@libas.in",
-          name: "HR User",
-          role: "HR",
+router.get(
+  "/microsoft/callback",
+  (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate(
+      "azuread-openidconnect",
+      (err: unknown, user: Express.User | false | undefined) => {
+        console.log("AUTH ERROR:", err);
+        console.log("AUTH USER:", user);
+
+        if (err || !user) {
+          return res.redirect("/auth/failed");
         }
-      : {
-          email: "employee.user@libas.in",
-          name: "Employee User",
-          role: "EMPLOYEE",
-        };
 
-  const token = jwt.sign(
-    mockUser,
-    process.env.JWT_SECRET || "dev-secret",
-    { expiresIn: "8h" }
-  );
+        req.user = user;
+        next();
+      }
+    )(req, res, next);
+  },
+  (req: Request, res: Response) => {
+    const user = req.user as {
+      email: string;
+      name?: string;
+      role: string;
+    };
 
-  res.redirect(
-    `${process.env.FRONTEND_URL}/auth/success?token=${token}`
-  );
+    const token = jwt.sign(user, env.jwtSecret, {
+      expiresIn: "8h",
+    });
+
+    res.redirect(
+      `${env.frontendUrl}/auth/success?token=${token}`
+    );
+  }
+);
+
+/**
+ * Login failed
+ */
+router.get("/failed", (_req: Request, res: Response) => {
+  res.status(401).json({
+    success: false,
+    message: "Microsoft login failed",
+  });
 });
 
 export default router;

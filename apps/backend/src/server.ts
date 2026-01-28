@@ -1,14 +1,17 @@
-import {app} from "./app.js";
+import "./config/env.js";
+import "./modules/auth/microsoft.strategy.js";
+import passport from "passport";
+import { app } from "./app.js";
 import { env } from "./config/env.js";
-import { connectDB } from "./database/index.js";
 
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
 
-async function startServer(){
-  // await connectDB()
+passport.deserializeUser((user: any, done) => {
+  done(null, user);
+});
 
-  app.listen(env.port, ()=>{
-    console.log(`Server is Running on http://localhost:${env.port}`);
-  });
-}
-
-startServer()
+app.listen(env.port, () => {
+  console.log(`🚀 Server is Running on http://localhost:${env.port}`);
+});
