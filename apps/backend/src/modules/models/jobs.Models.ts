@@ -39,6 +39,10 @@ const jobSchema = new Schema(
     skills: [{ type: String }],
     benefits: { type: String },
 
+    jdPdf: {
+  type: String, // file path or URL
+},
+
     // ===== OWNERSHIP =====
     createdBy: {
       type: Types.ObjectId,

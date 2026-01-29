@@ -1,13 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+export type JobStatus = "draft" | "published" | "closed";
+
 export interface Job {
-  [x: string]: any;
   _id: string;
   title: string;
   department: string;
   location: string;
   jobType: string;
-  status: "active" | "paused" | "closed";
-  applications: number;
-  deadline: string;
+  experienceLevel: string;
+  status: JobStatus;
+  openings?: number;
+  deadline?: string;
   createdAt: string;
 }

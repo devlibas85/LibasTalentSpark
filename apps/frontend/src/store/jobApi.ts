@@ -1,6 +1,5 @@
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { JobFormState } from "./jobFormSlice";
 import type { Job } from "@/types/job";
 
 export const jobApi = createApi({
@@ -20,14 +19,15 @@ export const jobApi = createApi({
   }),
   tagTypes: ["Job"],
   endpoints: (builder) => ({
-    createJob: builder.mutation<unknown, JobFormState>({
-      query: (data) => ({
-        url: "/jobs",
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["Job"],
-    }),
+   createJob: builder.mutation<unknown, FormData>({
+  query: (data) => ({
+    url: "/jobs",
+    method: "POST",
+    body: data,
+  }),
+  invalidatesTags: ["Job"],
+}),
+
     
   getJobs: builder.query<Job[], void>({
   query: () => "/jobs",

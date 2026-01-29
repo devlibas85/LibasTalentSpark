@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
 import {
   Briefcase,
   MapPin,
@@ -48,7 +50,10 @@ export default function PostJob() {
   const formData = useSelector((state: RootState) => state.jobForm);
 
   const [createJob] = useCreateJobMutation();
-  
+  const navigate = useNavigate();
+
+const [jdFile, setJdFile] = useState<File | null>(null);
+const [jdError, setJdError] = useState<string | null>(null);
 
   const [currentSkill, setCurrentSkill] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -91,21 +96,54 @@ export default function PostJob() {
   };
 
  
-
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  console.log("🚀 Job data being sent:", formData);
+  const payload = new FormData();
+
+  Object.entries(formData).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      payload.append(key, JSON.stringify(value));
+    } else {
+      payload.append(key, value);
+    }
+  });
+
+  if (jdFile) {
+    payload.append("jdPdf", jdFile);
+  }
 
   try {
-    await createJob(formData).unwrap();
+    await createJob(payload).unwrap();
     setShowSuccess(true);
+
     setTimeout(() => {
       setShowSuccess(false);
-    }, 3000);
+      navigate("/jobs/manage");
+    }, 800);
   } catch (error) {
     console.error("❌ Failed to create job:", error);
   }
+};
+
+
+const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  if (file.type !== "application/pdf") {
+    setJdError("Only PDF files are allowed");
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setJdError("PDF size must be under 5MB");
+    return;
+  }
+
+  setJdError(null);
+  setJdFile(file);
 };
 
 
@@ -120,47 +158,56 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
 
       {/* JD Upload Section */}
-      {/* <div className="bg-card border rounded-xl p-6 space-y-4">
-        <div className="flex items-center gap-2 mb-4">
-          <FileUp className="text-primary" size={20} />
-          <h2 className="text-lg font-semibold">Quick Upload</h2>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Upload Job Description (PDF/DOCX/TXT)
-          </label>
-          <div className="flex items-center gap-4">
-            <label className="flex-1 cursor-pointer">
-              <div className="px-4 py-3 rounded-lg border-2 border-dashed border-input hover:border-primary transition-colors text-center">
-                <FileUp className="inline-block mr-2" size={18} />
-                <span className="text-sm">Choose file or drag & drop</span>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Supports .pdf, .doc, .docx, .txt files
-                </p>
-              </div>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.txt"
-                onChange={handleJDUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
-          {isParsing && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
-              <motion.span
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="inline-block"
-              >
-                ⏳
-              </motion.span>
-              Parsing job description...
-            </p>
-          )}
-        </div>
-      </div> */}
+    <div className="bg-card border rounded-xl p-6 space-y-4">
+  <div className="flex items-center gap-2 mb-4">
+    <FileText className="text-primary" size={20} />
+    <h2 className="text-lg font-semibold">Job Description PDF</h2>
+  </div>
+
+  <label className="block text-sm font-medium mb-2">
+    Upload JD (PDF only)
+  </label>
+
+  {!jdFile ? (
+    <label className="cursor-pointer">
+      <div className="px-4 py-6 rounded-lg border-2 border-dashed border-input hover:border-primary transition-colors text-center">
+        <Upload className="mx-auto mb-2" size={20} />
+        <p className="text-sm">Click to upload PDF</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Max size: 5MB
+        </p>
+      </div>
+      <input
+        type="file"
+        accept="application/pdf"
+        onChange={handleJDUpload}
+        className="hidden"
+      />
+    </label>
+  ) : (
+    <div className="flex items-center justify-between bg-accent rounded-lg px-4 py-3">
+      <div className="flex items-center gap-2">
+        <FileText size={18} />
+        <span className="text-sm">{jdFile.name}</span>
+      </div>
+      <button
+        type="button"
+        onClick={() => setJdFile(null)}
+        className="text-destructive hover:underline text-sm"
+      >
+        Remove
+      </button>
+    </div>
+  )}
+
+  {jdError && (
+    <p className="text-sm text-destructive flex items-center gap-2">
+      <AlertCircle size={16} />
+      {jdError}
+    </p>
+  )}
+</div>
+
 
       {/* Success Message */}
       {showSuccess && (

@@ -10,31 +10,70 @@ import {
   Copy,
   PlayCircle,
   PauseCircle,
-  Users,
+  
   MapPin,
 } from "lucide-react";
 import { useGetJobsQuery } from "@/store/jobApi";
-
-
+import type { Job } from "@/types/job";
+import { useNavigate } from "react-router-dom";
 
 export default function ManageJobs() {
   const { data: jobs = [], isLoading, isError } = useGetJobsQuery();
-  
+  const navigate = useNavigate();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState<string | null>(null);
 
+  /* ===============================
+     STATUS HELPERS (DB → UI)
+     =============================== */
+
+  const uiStatus = (status: Job["status"]) => {
+    switch (status) {
+      case "published":
+        return "active";
+      case "draft":
+        return "paused";
+      case "closed":
+        return "closed";
+    }
+  };
+
+  const getStatusColor = (status: Job["status"]) => {
+    switch (status) {
+      case "published":
+        return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300";
+      case "draft":
+        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300";
+      case "closed":
+        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+    }
+  };
+
+  /* ===============================
+     FILTERED JOBS
+     =============================== */
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.department.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || job.status === filterStatus;
+
+    const matchesStatus =
+      filterStatus === "all" || uiStatus(job.status) === filterStatus;
+
     const matchesDepartment =
       filterDepartment === "all" || job.department === filterDepartment;
+
     return matchesSearch && matchesStatus && matchesDepartment;
   });
+
+  /* ===============================
+     SELECTION
+     =============================== */
 
   const toggleJobSelection = (jobId: string) => {
     setSelectedJobs((prev) =>
@@ -44,18 +83,9 @@ export default function ManageJobs() {
     );
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300";
-      case "paused":
-        return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300";
-      case "closed":
-        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-      default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-    }
-  };
+  /* ===============================
+     LOADING / ERROR
+     =============================== */
 
   if (isLoading) {
     return <div className="p-6">Loading...</div>;
@@ -67,7 +97,7 @@ export default function ManageJobs() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* ================= HEADER ================= */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold">Manage Jobs</h1>
@@ -75,23 +105,26 @@ export default function ManageJobs() {
             View and manage all job postings
           </p>
         </div>
-        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+        <button
+          onClick={() => navigate("/jobs/post")}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+        >
           + Post New Job
         </button>
       </div>
 
-      {/* Stats */}
+      {/* ================= STATS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: "Total Jobs", value: jobs.length, color: "text-blue-600" },
           {
             label: "Active",
-            value: jobs.filter((j) => j.status === "active").length,
+            value: jobs.filter((j) => uiStatus(j.status) === "active").length,
             color: "text-green-600",
           },
           {
             label: "Paused",
-            value: jobs.filter((j) => j.status === "paused").length,
+            value: jobs.filter((j) => uiStatus(j.status) === "paused").length,
             color: "text-yellow-600",
           },
           {
@@ -111,7 +144,7 @@ export default function ManageJobs() {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* ================= FILTERS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Search */}
         <div className="relative">
@@ -156,7 +189,7 @@ export default function ManageJobs() {
         </select>
       </div>
 
-      {/* Jobs Table */}
+      {/* ================= TABLE ================= */}
       <div className="bg-card rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -167,7 +200,7 @@ export default function ManageJobs() {
                     type="checkbox"
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedJobs(filteredJobs.map((j) => j.id));
+                        setSelectedJobs(filteredJobs.map((j) => j._id));
                       } else {
                         setSelectedJobs([]);
                       }
@@ -182,121 +215,126 @@ export default function ManageJobs() {
                 <th className="text-left p-4 font-medium">Job Title</th>
                 <th className="text-left p-4 font-medium">Department</th>
                 <th className="text-left p-4 font-medium">Location</th>
-                <th className="text-left p-4 font-medium">Applications</th>
+
                 <th className="text-left p-4 font-medium">Status</th>
                 <th className="text-left p-4 font-medium">Deadline</th>
                 <th className="text-left p-4 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredJobs.map((job) => (
-                <motion.tr
-                  key={job.id}
-                  className="border-t hover:bg-muted/30 transition-colors"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <td className="p-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedJobs.includes(job.id)}
-                      onChange={() => toggleJobSelection(job.id)}
-                      className="rounded border-gray-300"
-                    />
-                  </td>
-                  <td className="p-4">
-                    <div>
-                      <p className="font-medium">{job.title}</p>
-                      <p className="text-sm text-muted-foreground">{job.type}</p>
-                    </div>
-                  </td>
-                  <td className="p-4">{job.department}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      {job.location}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      {job.applications}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        job.status
-                      )}`}
-                    >
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    {new Date(job.deadline).toLocaleDateString("en-IN", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </td>
-                  <td className="p-4">
-                    <div className="relative">
-                      <button
-                        onClick={() =>
-                          setShowMenu(showMenu === job.id ? null : job.id)
-                        }
-                        className="p-1.5 hover:bg-muted rounded-lg transition-colors"
+              {filteredJobs.map((job) => {
+                const isActive = job.status === "published";
+
+                return (
+                  <motion.tr
+                    key={job._id}
+                    className="border-t hover:bg-muted/30 transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedJobs.includes(job._id)}
+                        onChange={() => toggleJobSelection(job._id)}
+                        className="rounded border-gray-300"
+                      />
+                    </td>
+
+                    <td className="p-4">
+                      <div>
+                        <p className="font-medium">{job.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {job.jobType}
+                        </p>
+                      </div>
+                    </td>
+
+                    <td className="p-4">{job.department}</td>
+
+                    <td className="p-4">
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        {job.location}
+                      </div>
+                    </td>
+
+                   
+
+                    <td className="p-4">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          job.status
+                        )}`}
                       >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {showMenu === job.id && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="absolute right-0 mt-2 w-48 bg-popover border rounded-lg shadow-lg z-10"
+                        {uiStatus(job.status)}
+                      </span>
+                    </td>
+
+                    <td className="p-4">
+                      {job.deadline
+                        ? new Date(job.deadline).toLocaleDateString("en-IN", {
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : "N/A"}
+                    </td>
+
+                    <td className="p-4">
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setShowMenu(showMenu === job._id ? null : job._id)
+                          }
+                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                         >
-                          {[
-                            { icon: Eye, label: "View Details", color: "" },
-                            { icon: Edit2, label: "Edit Job", color: "" },
-                            {
-                              icon:
-                                job.status === "active"
-                                  ? PauseCircle
-                                  : PlayCircle,
-                              label:
-                                job.status === "active"
-                                  ? "Pause Job"
-                                  : "Activate Job",
-                              color: "",
-                            },
-                            { icon: Copy, label: "Duplicate", color: "" },
-                            {
-                              icon: Trash2,
-                              label: "Delete",
-                              color:
-                                "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20",
-                            },
-                          ].map((item) => (
-                            <button
-                              key={item.label}
-                              onClick={() => setShowMenu(null)}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left ${item.color}`}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              {item.label}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+
+                        {showMenu === job._id && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute right-0 mt-2 w-48 bg-popover border rounded-lg shadow-lg z-10"
+                          >
+                            {[
+                              { icon: Eye, label: "View Details", color: "" },
+                              { icon: Edit2, label: "Edit Job", color: "" },
+                              {
+                                icon: isActive ? PauseCircle : PlayCircle,
+                                label: isActive ? "Pause Job" : "Activate Job",
+                                color: "",
+                              },
+                              { icon: Copy, label: "Duplicate", color: "" },
+                              {
+                                icon: Trash2,
+                                label: "Delete",
+                                color:
+                                  "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20",
+                              },
+                            ].map((item) => (
+                              <button
+                                key={item.label}
+                                onClick={() => setShowMenu(null)}
+                                className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left ${item.color}`}
+                              >
+                                <item.icon className="h-4 w-4" />
+                                {item.label}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </div>
+                    </td>
+                  </motion.tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Pagination */}
+      {/* ================= PAGINATION ================= */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Showing {filteredJobs.length} of {jobs.length} jobs
