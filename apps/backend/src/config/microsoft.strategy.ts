@@ -1,4 +1,4 @@
-import { env } from "../../config/env.js";
+import { env } from "../config/env.js";
 import passport from "passport";
 import { OIDCStrategy } from "passport-azure-ad";
 

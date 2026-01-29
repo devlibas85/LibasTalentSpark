@@ -1,5 +1,5 @@
 import "./config/env.js";
-import "./modules/auth/microsoft.strategy.js";
+import "./config/microsoft.strategy.js";
 import passport from "passport";
 import { app } from "./app.js";
 import { env } from "./config/env.js";

@@ -13,17 +13,17 @@ import {
   Upload,
   X,
   AlertCircle,
-  FileUp,
+  
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
   updateField,
-  setFormData,
+
 } from "@/store/jobFormSlice";
 import {
   useCreateJobMutation,
-  useParseJDMutation,
+
 } from "@/store/jobApi";
 
 interface JobFormData {
@@ -48,7 +48,7 @@ export default function PostJob() {
   const formData = useSelector((state: RootState) => state.jobForm);
 
   const [createJob] = useCreateJobMutation();
-  const [parseJD, { isLoading: isParsing }] = useParseJDMutation();
+  
 
   const [currentSkill, setCurrentSkill] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -90,36 +90,24 @@ export default function PostJob() {
     );
   };
 
-  const handleJDUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    if (!e.target.files?.[0]) return;
+ 
 
-    const fd = new FormData();
-    fd.append("jd", e.target.files[0]);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      const parsedData = await parseJD(fd).unwrap();
-      dispatch(setFormData(parsedData));
-    } catch (error) {
-      console.error("Failed to parse JD:", error);
-    }
-  };
+  console.log("🚀 Job data being sent:", formData);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      await createJob(formData).unwrap();
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        // Reset form or navigate away
-      }, 3000);
-    } catch (error) {
-      console.error("Failed to create job:", error);
-    }
-  };
+  try {
+    await createJob(formData).unwrap();
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+  } catch (error) {
+    console.error("❌ Failed to create job:", error);
+  }
+};
+
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -132,7 +120,7 @@ export default function PostJob() {
       </div>
 
       {/* JD Upload Section */}
-      <div className="bg-card border rounded-xl p-6 space-y-4">
+      {/* <div className="bg-card border rounded-xl p-6 space-y-4">
         <div className="flex items-center gap-2 mb-4">
           <FileUp className="text-primary" size={20} />
           <h2 className="text-lg font-semibold">Quick Upload</h2>
@@ -172,7 +160,7 @@ export default function PostJob() {
             </p>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Success Message */}
       {showSuccess && (

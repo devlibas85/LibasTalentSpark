@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface JobFormState {
@@ -35,18 +34,26 @@ const initialState: JobFormState = {
   benefits: "",
 };
 
+type UpdateFieldPayload<K extends keyof JobFormState> = {
+  name: K;
+  value: JobFormState[K];
+};
+
 const jobFormSlice = createSlice({
   name: "jobForm",
   initialState,
   reducers: {
-    updateField(
-      state,
-      action: PayloadAction<{ name: keyof JobFormState; value: any }>
+    updateField<K extends keyof JobFormState>(
+      state: JobFormState,
+      action: PayloadAction<UpdateFieldPayload<K>>
     ) {
       state[action.payload.name] = action.payload.value;
     },
 
-    setFormData(state, action: PayloadAction<Partial<JobFormState>>) {
+    setFormData(
+      state: JobFormState,
+      action: PayloadAction<Partial<JobFormState>>
+    ) {
       return { ...state, ...action.payload };
     },
 
@@ -56,7 +63,10 @@ const jobFormSlice = createSlice({
   },
 });
 
-export const { updateField, setFormData, resetForm } =
-  jobFormSlice.actions;
+export const {
+  updateField,
+  setFormData,
+  resetForm,
+} = jobFormSlice.actions;
 
 export const jobFormReducer = jobFormSlice.reducer;
