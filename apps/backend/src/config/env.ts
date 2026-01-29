@@ -23,11 +23,11 @@ export const env = {
   azureClientSecret: process.env.AZURE_CLIENT_SECRET!,
   jwtSecret: process.env.JWT_SECRET!,
   frontendUrl: process.env.FRONTEND_URL!,
-  mongoUri: process.env.MONGO_URI,
+   mongoUri: process.env.MONGO_URI!,
 };
 
 // Validate required vars
-if (!env.azureClientId || !env.azureTenantId || !env.azureClientSecret || !env.jwtSecret) {
+if (!env.azureClientId || !env.azureTenantId || !env.azureClientSecret || !env.jwtSecret ||   !env.mongoUri) {
   console.error("❌ Missing required environment variables in .env file");
   console.error("Please check your .env file at:", envPath);
   throw new Error("Missing required environment variables");

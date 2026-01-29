@@ -6,6 +6,7 @@ import session from "express-session";
 import authRoutes from "./modules/auth/auth.routes.js";
 import healthRouter from "./modules/health/health.route.js";
 
+
 export const app = express();
 
 app.use(
@@ -36,3 +37,4 @@ app.use(passport.session());
 
 app.use("/auth", authRoutes);
 app.use("/health", healthRouter);
+

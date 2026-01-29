@@ -9,12 +9,22 @@ import {
   FileText,
   Tag,
   Calendar,
-  
   TrendingUp,
   Upload,
   X,
   AlertCircle,
+  FileUp,
 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import {
+  updateField,
+  setFormData,
+} from "@/store/jobFormSlice";
+import {
+  useCreateJobMutation,
+  useParseJDMutation,
+} from "@/store/jobApi";
 
 interface JobFormData {
   title: string;
@@ -34,22 +44,11 @@ interface JobFormData {
 }
 
 export default function PostJob() {
-  const [formData, setFormData] = useState<JobFormData>({
-    title: "",
-    department: "",
-    location: "",
-    jobType: "Full-time",
-    experienceLevel: "Mid-level",
-    salaryMin: "",
-    salaryMax: "",
-    openings: "1",
-    deadline: "",
-    description: "",
-    responsibilities: "",
-    requirements: "",
-    skills: [],
-    benefits: "",
-  });
+  const dispatch = useDispatch();
+  const formData = useSelector((state: RootState) => state.jobForm);
+
+  const [createJob] = useCreateJobMutation();
+  const [parseJD, { isLoading: isParsing }] = useParseJDMutation();
 
   const [currentSkill, setCurrentSkill] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -59,34 +58,67 @@ export default function PostJob() {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    dispatch(
+      updateField({
+        name: e.target.name as keyof JobFormData,
+        value: e.target.value,
+      })
+    );
   };
 
   const handleAddSkill = () => {
-    if (currentSkill.trim() && !formData.skills.includes(currentSkill.trim())) {
-      setFormData((prev) => ({
-        ...prev,
-        skills: [...prev.skills, currentSkill.trim()],
-      }));
+    if (
+      currentSkill.trim() &&
+      !formData.skills.includes(currentSkill.trim())
+    ) {
+      dispatch(
+        updateField({
+          name: "skills",
+          value: [...formData.skills, currentSkill.trim()],
+        })
+      );
       setCurrentSkill("");
     }
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      skills: prev.skills.filter((skill) => skill !== skillToRemove),
-    }));
+    dispatch(
+      updateField({
+        name: "skills",
+        value: formData.skills.filter((skill) => skill !== skillToRemove),
+      })
+    );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleJDUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files?.[0]) return;
+
+    const fd = new FormData();
+    fd.append("jd", e.target.files[0]);
+
+    try {
+      const parsedData = await parseJD(fd).unwrap();
+      dispatch(setFormData(parsedData));
+    } catch (error) {
+      console.error("Failed to parse JD:", error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      // Reset form or navigate away
-    }, 3000);
+    
+    try {
+      await createJob(formData).unwrap();
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        // Reset form or navigate away
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to create job:", error);
+    }
   };
 
   return (
@@ -97,6 +129,49 @@ export default function PostJob() {
         <p className="text-muted-foreground mt-1">
           Fill in the details to create a new job posting
         </p>
+      </div>
+
+      {/* JD Upload Section */}
+      <div className="bg-card border rounded-xl p-6 space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <FileUp className="text-primary" size={20} />
+          <h2 className="text-lg font-semibold">Quick Upload</h2>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Upload Job Description (PDF/DOCX/TXT)
+          </label>
+          <div className="flex items-center gap-4">
+            <label className="flex-1 cursor-pointer">
+              <div className="px-4 py-3 rounded-lg border-2 border-dashed border-input hover:border-primary transition-colors text-center">
+                <FileUp className="inline-block mr-2" size={18} />
+                <span className="text-sm">Choose file or drag & drop</span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Supports .pdf, .doc, .docx, .txt files
+                </p>
+              </div>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleJDUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
+          {isParsing && (
+            <p className="text-sm text-muted-foreground mt-3 flex items-center gap-2">
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="inline-block"
+              >
+                ⏳
+              </motion.span>
+              Parsing job description...
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Success Message */}
