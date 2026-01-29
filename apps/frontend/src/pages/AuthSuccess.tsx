@@ -1,4 +1,4 @@
-// src/pages/AuthSuccess.tsx
+
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
@@ -15,42 +15,32 @@ type DecodedToken = {
 export default function AuthSuccess() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const tokenFromUrl = params.get("token");
 
-    console.log("🔐 Token from URL:", tokenFromUrl);
+  if (tokenFromUrl) {
+    const decoded = jwtDecode<DecodedToken>(tokenFromUrl);
 
-    if (tokenFromUrl) {
-      const decoded = jwtDecode<DecodedToken>(tokenFromUrl);
-      console.log("🧠 Decoded JWT payload:", decoded);
+    localStorage.setItem("auth_token", tokenFromUrl);
+    localStorage.setItem("user_role", decoded.role);
+    localStorage.setItem("user_email", decoded.email);
+    localStorage.setItem("user_name", decoded.name);
 
-      // ✅ Changed to "token" to match jobApi
-      localStorage.setItem("token", tokenFromUrl);
-      localStorage.setItem("user_role", decoded.role);
-      localStorage.setItem("user_email", decoded.email);
-      localStorage.setItem("user_name", decoded.name);
+    navigate("/dashboard", { replace: true });
+    return;
+  }
 
-      console.log("💾 Stored token:", localStorage.getItem("token"));
-      console.log("💾 Stored user_role:", localStorage.getItem("user_role"));
+  const existingToken = localStorage.getItem("auth_token");
 
-      navigate("/dashboard", { replace: true });
-      return;
-    }
+  if (existingToken) {
+    navigate("/dashboard", { replace: true });
+    return;
+  }
 
-    const existingToken = localStorage.getItem("token");
-    console.log("♻️ Existing token from storage:", existingToken);
+  navigate("/login", { replace: true });
+}, [navigate]);
 
-    if (existingToken) {
-      const decoded = jwtDecode<DecodedToken>(existingToken);
-      console.log("🧠 Decoded stored token:", decoded);
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-
-    console.warn("❌ No token found, redirecting to login");
-    navigate("/login", { replace: true });
-  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

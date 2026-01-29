@@ -12,93 +12,19 @@ import {
   PauseCircle,
   Users,
   MapPin,
-  Clock,
-  Calendar,
 } from "lucide-react";
+import { useGetJobsQuery } from "@/store/jobApi";
 
-interface Job {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  status: "active" | "paused" | "closed";
-  applications: number;
-  posted: string;
-  deadline: string;
-  salary: string;
-}
+
 
 export default function ManageJobs() {
+  const { data: jobs = [], isLoading, isError } = useGetJobsQuery();
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDepartment, setFilterDepartment] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDepartment, setFilterDepartment] = useState("all");
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState<string | null>(null);
-
-  // Sample data
-  const jobs: Job[] = [
-    {
-      id: "1",
-      title: "Senior React Developer",
-      department: "Engineering",
-      location: "Bangalore, India",
-      type: "Full-time",
-      status: "active",
-      applications: 24,
-      posted: "2026-01-15",
-      deadline: "2026-02-15",
-      salary: "₹12-18 LPA",
-    },
-    {
-      id: "2",
-      title: "Product Designer",
-      department: "Design",
-      location: "Remote",
-      type: "Full-time",
-      status: "active",
-      applications: 18,
-      posted: "2026-01-20",
-      deadline: "2026-02-20",
-      salary: "₹10-15 LPA",
-    },
-    {
-      id: "3",
-      title: "QA Engineer",
-      department: "Engineering",
-      location: "Mumbai, India",
-      type: "Full-time",
-      status: "paused",
-      applications: 12,
-      posted: "2026-01-10",
-      deadline: "2026-02-10",
-      salary: "₹8-12 LPA",
-    },
-    {
-      id: "4",
-      title: "Marketing Manager",
-      department: "Marketing",
-      location: "Delhi, India",
-      type: "Full-time",
-      status: "active",
-      applications: 31,
-      posted: "2026-01-05",
-      deadline: "2026-02-05",
-      salary: "₹15-22 LPA",
-    },
-    {
-      id: "5",
-      title: "Backend Developer",
-      department: "Engineering",
-      location: "Pune, India",
-      type: "Contract",
-      status: "closed",
-      applications: 45,
-      posted: "2025-12-20",
-      deadline: "2026-01-20",
-      salary: "₹10-14 LPA",
-    },
-  ];
 
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
@@ -112,7 +38,9 @@ export default function ManageJobs() {
 
   const toggleJobSelection = (jobId: string) => {
     setSelectedJobs((prev) =>
-      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
+      prev.includes(jobId)
+        ? prev.filter((id) => id !== jobId)
+        : [...prev, jobId]
     );
   };
 
@@ -129,17 +57,25 @@ export default function ManageJobs() {
     }
   };
 
+  if (isLoading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (isError) {
+    return <div className="p-6">Error loading jobs</div>;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Manage Jobs</h1>
+          <h1 className="text-3xl font-bold">Manage Jobs</h1>
           <p className="text-muted-foreground mt-1">
             View and manage all job postings
           </p>
         </div>
-        <button className="px-4 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors self-start md:self-auto">
+        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
           + Post New Job
         </button>
       </div>
@@ -164,77 +100,69 @@ export default function ManageJobs() {
             color: "text-gray-600",
           },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card border rounded-xl p-4">
+          <motion.div
+            key={stat.label}
+            className="bg-card p-4 rounded-lg border"
+            whileHover={{ scale: 1.02 }}
+          >
             <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className={`text-2xl font-bold mt-1 ${stat.color}`}>
-              {stat.value}
-            </p>
-          </div>
+            <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+          </motion.div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="bg-card border rounded-xl p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
-          <div className="relative md:col-span-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              size={18}
-            />
-            <input
-              type="text"
-              placeholder="Search jobs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <Filter
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              size={18}
-            />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="closed">Closed</option>
-            </select>
-          </div>
-
-          {/* Department Filter */}
-          <div>
-            <select
-              value={filterDepartment}
-              onChange={(e) => setFilterDepartment(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            >
-              <option value="all">All Departments</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Design">Design</option>
-              <option value="Product">Product</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Sales">Sales</option>
-              <option value="Operations">Operations</option>
-            </select>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search jobs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          />
         </div>
+
+        {/* Status Filter */}
+        <div className="relative">
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="paused">Paused</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+
+        {/* Department Filter */}
+        <select
+          value={filterDepartment}
+          onChange={(e) => setFilterDepartment(e.target.value)}
+          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+        >
+          <option value="all">All Departments</option>
+          <option value="Engineering">Engineering</option>
+          <option value="Design">Design</option>
+          <option value="Product">Product</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Sales">Sales</option>
+          <option value="Operations">Operations</option>
+        </select>
       </div>
 
       {/* Jobs Table */}
-      <div className="bg-card border rounded-xl overflow-hidden">
+      <div className="bg-card rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted/50 border-b">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="text-left p-4">
                   <input
                     type="checkbox"
                     onChange={(e) => {
@@ -251,38 +179,24 @@ export default function ManageJobs() {
                     className="rounded border-gray-300"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Job Title
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Department
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Location
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Applications
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Deadline
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  Actions
-                </th>
+                <th className="text-left p-4 font-medium">Job Title</th>
+                <th className="text-left p-4 font-medium">Department</th>
+                <th className="text-left p-4 font-medium">Location</th>
+                <th className="text-left p-4 font-medium">Applications</th>
+                <th className="text-left p-4 font-medium">Status</th>
+                <th className="text-left p-4 font-medium">Deadline</th>
+                <th className="text-left p-4 font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody>
               {filteredJobs.map((job) => (
                 <motion.tr
                   key={job.id}
+                  className="border-t hover:bg-muted/30 transition-colors"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="hover:bg-muted/30 transition-colors"
                 >
-                  <td className="px-4 py-4">
+                  <td className="p-4">
                     <input
                       type="checkbox"
                       checked={selectedJobs.includes(job.id)}
@@ -290,47 +204,41 @@ export default function ManageJobs() {
                       className="rounded border-gray-300"
                     />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="p-4">
                     <div>
-                      <p className="font-medium text-foreground">{job.title}</p>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Clock size={12} />
-                        {job.type}
-                      </p>
+                      <p className="font-medium">{job.title}</p>
+                      <p className="text-sm text-muted-foreground">{job.type}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-sm">{job.department}</td>
-                  <td className="px-4 py-4">
-                    <span className="text-sm flex items-center gap-1">
-                      <MapPin size={14} className="text-muted-foreground" />
+                  <td className="p-4">{job.department}</td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
                       {job.location}
-                    </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                      <Users size={14} />
+                  <td className="p-4">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="h-4 w-4 text-muted-foreground" />
                       {job.applications}
-                    </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="p-4">
                     <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusColor(
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
                         job.status
                       )}`}
                     >
                       {job.status}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-sm flex items-center gap-1">
-                      <Calendar size={14} className="text-muted-foreground" />
-                      {new Date(job.deadline).toLocaleDateString("en-IN", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
+                  <td className="p-4">
+                    {new Date(job.deadline).toLocaleDateString("en-IN", {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="p-4">
                     <div className="relative">
                       <button
                         onClick={() =>
@@ -338,14 +246,13 @@ export default function ManageJobs() {
                         }
                         className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                       >
-                        <MoreVertical size={18} />
+                        <MoreVertical className="h-4 w-4" />
                       </button>
-
                       {showMenu === job.id && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="absolute right-0 mt-2 w-48 bg-card border rounded-lg shadow-lg z-10 overflow-hidden"
+                          className="absolute right-0 mt-2 w-48 bg-popover border rounded-lg shadow-lg z-10"
                         >
                           {[
                             { icon: Eye, label: "View Details", color: "" },
@@ -365,15 +272,16 @@ export default function ManageJobs() {
                             {
                               icon: Trash2,
                               label: "Delete",
-                              color: "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20",
+                              color:
+                                "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20",
                             },
                           ].map((item) => (
                             <button
                               key={item.label}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors ${item.color}`}
                               onClick={() => setShowMenu(null)}
+                              className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left ${item.color}`}
                             >
-                              <item.icon size={16} />
+                              <item.icon className="h-4 w-4" />
                               {item.label}
                             </button>
                           ))}
@@ -386,26 +294,26 @@ export default function ManageJobs() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Pagination */}
-        <div className="border-t px-4 py-3 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredJobs.length} of {jobs.length} jobs
-          </p>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1.5 border rounded-lg hover:bg-muted text-sm transition-colors">
-              Previous
-            </button>
-            <button className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm">
-              1
-            </button>
-            <button className="px-3 py-1.5 border rounded-lg hover:bg-muted text-sm transition-colors">
-              2
-            </button>
-            <button className="px-3 py-1.5 border rounded-lg hover:bg-muted text-sm transition-colors">
-              Next
-            </button>
-          </div>
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredJobs.length} of {jobs.length} jobs
+        </p>
+        <div className="flex gap-2">
+          <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors">
+            Previous
+          </button>
+          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">
+            1
+          </button>
+          <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors">
+            2
+          </button>
+          <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors">
+            Next
+          </button>
         </div>
       </div>
     </div>

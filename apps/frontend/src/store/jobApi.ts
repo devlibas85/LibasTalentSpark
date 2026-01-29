@@ -1,13 +1,14 @@
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { JobFormState } from "./jobFormSlice";
+import type { Job } from "@/types/job";
 
 export const jobApi = createApi({
   reducerPath: "jobApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api",
     prepareHeaders: (headers) => {
-      // ✅ Changed to "auth_token" to match your storage
+     
       const token = localStorage.getItem("auth_token");
       
       if (token) {
@@ -28,10 +29,10 @@ export const jobApi = createApi({
       invalidatesTags: ["Job"],
     }),
     
-    getJobs: builder.query<unknown, void>({
-      query: () => "/jobs",
-      providesTags: ["Job"],
-    }),
+  getJobs: builder.query<Job[], void>({
+  query: () => "/jobs",
+  providesTags: ["Job"],
+}),
   }),
 });
 
