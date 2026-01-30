@@ -267,14 +267,27 @@ const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
                 className="w-full px-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
               >
                 <option value="">Select Department</option>
-                <option value="Engineering">Engineering</option>
-                <option value="Design">Design</option>
-                <option value="Product">Product</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Sales">Sales</option>
-                <option value="Operations">Operations</option>
-                <option value="Finance">Finance</option>
+                <option value="Finance">FINANCE & ACCOUNTS</option>
+                <option value="crm">CRM</option>
+                <option value="tech">TECH & DE</option>
+                <option value="auditing">ADUITING</option>
+                <option value="admin">ADMIN</option>
+                <option value="founder">FOUNDER OFFICE</option>
+                <option value="catalogue">CATALOGUE</option>
+                <option value="ecommerce">ECOMMERCE </option>
                 <option value="HR">Human Resources</option>
+                <option value="Marketing">MARKETING</option>
+                <option value="Mis">MIS</option>
+                <option value="Retailebo">RETAIL EBO</option>
+                <option value="Retail">RETAIL</option>
+                <option value="Project">PROJECT</option>
+                <option value="Planning">CENTRAL PLANNING</option>
+                <option value="Buying">BUYING</option>
+                <option value="Fashion">FASHION DESIGNING & MERCHANDISING</option>
+                <option value="Production">PRODUCTION</option>
+                <option value="Supply">SUPPLY CHAIN</option>
+                <option value="Warehouse"> WAREHOUSE OPERATIONS</option>
+                
               </select>
             </div>
 
