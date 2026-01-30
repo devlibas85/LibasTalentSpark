@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { logout } from "@/store/slice/authSlice";
+
 import {
   LayoutDashboard,
   Briefcase,
@@ -22,6 +27,8 @@ import {
 
 type Role = "hr" | "employee";
 
+
+
 interface SubMenuItem {
   label: string;
   path: string;
@@ -40,25 +47,30 @@ interface MenuItem {
 }
 
 interface LibasSidebarProps {
-  role: Role;
-  userName?: string;
-  userEmail?: string;
   defaultCollapsed?: boolean;
   onNavigate?: (path: string) => void;
 }
 
+
 export const LibasSidebar = ({
-  role,
-  userName = "User",
-  userEmail = "user@libas.in",
   defaultCollapsed = false,
   onNavigate,
 }: LibasSidebarProps) => {
+
+const dispatch = useDispatch();
+
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [isMobileView, setIsMobileView] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [activeItem, setActiveItem] = useState("/dashboard");
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+
+
+const { role, name, email } = useSelector(
+  (state: RootState) => state.auth
+);
+
 
   // Detect mobile view
   useEffect(() => {
@@ -161,8 +173,9 @@ export const LibasSidebar = ({
   ];
 
   const filteredNavItems = navigationItems.filter((item) =>
-    item.roles.includes(role)
-  );
+  item.roles.includes(role as Role)
+);
+
 
   const toggleSidebar = () => {
     if (isMobileView) {
@@ -353,9 +366,8 @@ export const LibasSidebar = ({
             <div className="border-t border-border p-3">
               {/* Logout button */}
               <button
-                onClick={() => {
-                  if (onNavigate) onNavigate("/logout");
-                }}
+               onClick={() => dispatch(logout())}
+
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
                   text-sm font-medium text-muted-foreground
@@ -381,18 +393,18 @@ export const LibasSidebar = ({
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary uppercase">
-                      {userName.charAt(0)}
+                     {name?.charAt(0) ?? "U"}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
-                      {userName}
+                     {name ?? "User"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {userEmail}
+                       {email ?? "user@libas.in"}
                     </p>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary mt-1">
-                      {role.toUpperCase()}
+   {role?.toUpperCase()}
                     </span>
                   </div>
                 </motion.div>
