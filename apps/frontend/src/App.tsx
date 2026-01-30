@@ -1,16 +1,20 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+
 import { getHealth } from "./api/health";
 
+// Pages
 import Login from "./pages/Login ";
-import ProtectedRoute from "./components/ProtectedRoute";
 import AuthSuccess from "./pages/AuthSuccess";
-import DashboardLayout from "./components/layouts/DashboardLayout";
-
-// Common Pages
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+
+// Layout
+import DashboardLayout from "./components/layouts/DashboardLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // HR Pages
 import PostJob from "./pages/hr/PostJob";
@@ -19,24 +23,19 @@ import CandidatePipeline from "./pages/hr/CandidatePipeline";
 import ReferralsManagement from "./pages/hr/RefralManagement";
 import ReportsAnalytics from "./pages/hr/ReportAnalysis";
 
-// EMPLOYEE Pages
-
+// Employee Pages
 import BrowseJobs from "./pages/employee/BrowseJobs";
 import MyApplications from "./pages/employee/MyApplications";
 import ReferCandidate from "./pages/employee/ReferCandidates";
 import MyReferrals from "./pages/employee/MyRefrals";
 
-
 function App() {
+  const role = useSelector((state: RootState) => state.auth.role);
+  console.log("🧠 ROLE FROM REDUX IN APP:", role);
+
   useEffect(() => {
     getHealth().then(console.log);
   }, []);
-
-  // Helper to get user role from localStorage
-  const getUserRole = (): "hr" | "employee" => {
-    const role = localStorage.getItem("user_role");
-    return role === "HR" ? "hr" : "employee";
-  };
 
   return (
     <Routes>
@@ -44,142 +43,121 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/success" element={<AuthSuccess />} />
 
-      {/* Protected routes with layout */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout role={getUserRole()}>
+      {/* Protected routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/dashboard"
+          element={
+            <DashboardLayout role={role!}>
               <Dashboard />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/jobs/post"
-        element={
-          <ProtectedRoute>
+        <Route
+          path="/profile"
+          element={
+            <DashboardLayout role={role!}>
+              <Profile />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <DashboardLayout role={role!}>
+              <Settings />
+            </DashboardLayout>
+          }
+        />
+
+        {/* HR routes */}
+        <Route
+          path="/jobs/post"
+          element={
             <DashboardLayout role="hr">
               <PostJob />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/jobs/manage"
-        element={
-          <ProtectedRoute>
+        <Route
+          path="/jobs/manage"
+          element={
             <DashboardLayout role="hr">
               <ManageJobs />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/candidates"
-        element={
-          <ProtectedRoute>
+        <Route
+          path="/candidates"
+          element={
             <DashboardLayout role="hr">
               <CandidatePipeline />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/referrals-manage"
-        element={
-          <ProtectedRoute>
+        <Route
+          path="/referrals-manage"
+          element={
             <DashboardLayout role="hr">
               <ReferralsManagement />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
+        <Route
+          path="/reports"
+          element={
             <DashboardLayout role="hr">
               <ReportsAnalytics />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-      
+          }
+        />
 
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout role={getUserRole()}>
-              <Profile />
+        {/* Employee routes */}
+        <Route
+          path="/browse-jobs"
+          element={
+            <DashboardLayout role="employee">
+              <BrowseJobs />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
+          }
+        />
 
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout role={getUserRole()}>
-              <Settings />
+        <Route
+          path="/applications"
+          element={
+            <DashboardLayout role="employee">
+              <MyApplications />
             </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-  path="/browse-jobs"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout role="employee">
-        <BrowseJobs />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
+          }
+        />
 
-<Route
-  path="/applications"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout role="employee">
-        <MyApplications />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/refer"
+          element={
+            <DashboardLayout role="employee">
+              <ReferCandidate />
+            </DashboardLayout>
+          }
+        />
 
-<Route
-  path="/refer"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout role="employee">
-        <ReferCandidate />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-
-<Route
-  path="/my-referrals"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout role="employee">
-        <MyReferrals />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
-
+        <Route
+          path="/my-referrals"
+          element={
+            <DashboardLayout role="employee">
+              <MyReferrals />
+            </DashboardLayout>
+          }
+        />
+      </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

@@ -1,8 +1,9 @@
-
 import { jwtDecode } from "jwt-decode";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setAuth } from "../store/slice/authSlice";
 
 type DecodedToken = {
   email: string;
@@ -12,35 +13,59 @@ type DecodedToken = {
   exp?: number;
 };
 
+const roleMap = {
+  HR: "hr",
+  EMPLOYEE: "employee",
+} as const;
+
 export default function AuthSuccess() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-useEffect(() => {
-  const params = new URLSearchParams(window.location.search);
-  const tokenFromUrl = params.get("token");
+  useEffect(() => {
+    const authenticate = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tokenFromUrl = params.get("token");
+        const token = tokenFromUrl || localStorage.getItem("auth_token");
 
-  if (tokenFromUrl) {
-    const decoded = jwtDecode<DecodedToken>(tokenFromUrl);
+        if (!token) {
+          navigate("/login", { replace: true });
+          return;
+        }
 
-    localStorage.setItem("auth_token", tokenFromUrl);
-    localStorage.setItem("user_role", decoded.role);
-    localStorage.setItem("user_email", decoded.email);
-    localStorage.setItem("user_name", decoded.name);
+        const decoded = jwtDecode<DecodedToken>(token);
 
-    navigate("/dashboard", { replace: true });
-    return;
-  }
+        // 🔐 Token expiry check
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+          localStorage.removeItem("auth_token");
+          navigate("/login", { replace: true });
+          return;
+        }
 
-  const existingToken = localStorage.getItem("auth_token");
+        // Persist token
+        localStorage.setItem("auth_token", token);
 
-  if (existingToken) {
-    navigate("/dashboard", { replace: true });
-    return;
-  }
+        // Hydrate Redux
+        dispatch(
+          setAuth({
+            token,
+            name: decoded.name,
+            email: decoded.email,
+            role: roleMap[decoded.role],
+          })
+        );
 
-  navigate("/login", { replace: true });
-}, [navigate]);
+        navigate("/dashboard", { replace: true });
+      } catch (error) {
+        console.error("Authentication failed:", error);
+        localStorage.removeItem("auth_token");
+        navigate("/login", { replace: true });
+      }
+    };
 
+    authenticate();
+  }, [dispatch, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

@@ -22,7 +22,7 @@ import type { RootState } from "@/store";
 import {
   updateField,
 
-} from "@/store/jobFormSlice";
+} from "@/store/slice/jobFormSlice";
 import {
   useCreateJobMutation,
 

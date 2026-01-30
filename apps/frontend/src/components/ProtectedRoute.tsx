@@ -1,17 +1,13 @@
-import { Navigate } from "react-router-dom";
-import type { JSX } from "react/jsx-runtime";
+import { Navigate, Outlet } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
 
-export default function ProtectedRoute({
-  children,
-}: {
-  children: JSX.Element;
-}) {
-  const token = localStorage.getItem("auth_token");
-  const role = localStorage.getItem("user_role");
+export default function ProtectedRoute() {
+  const { token } = useSelector((state: RootState) => state.auth);
 
-  if (!token || !role) {
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <Outlet />;
 }
