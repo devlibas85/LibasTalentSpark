@@ -46,8 +46,8 @@ export async function triggerAIAsync({
 
     console.log("📦 Preparing FormData...");
     const formData = new FormData();
-    formData.append("jd", fs.createReadStream(job.jdPdf));
-    formData.append("resume", fs.createReadStream(resumePath));
+    formData.append("jd_file", fs.createReadStream(job.jdPdf));
+    formData.append("resume_file", fs.createReadStream(resumePath));
 
     console.log("🌐 Sending PDFs to AI service...");
     console.log("🌐 AI_SERVICE_URL:", process.env.AI_SERVICE_URL);
@@ -66,12 +66,20 @@ export async function triggerAIAsync({
     console.log("📊 AI response data:", response.data);
 
     console.log("💾 Saving AI evaluation to referral...");
-    await Referral.findByIdAndUpdate(referralId, {
-      aiEvaluation: {
-        ...response.data,
-        evaluatedAt: new Date(),
-      },
-    });
+ const aiResult = response.data.aiEvaluation ?? response.data;
+
+console.log("🧠 Parsed AI result:", aiResult);
+
+await Referral.findByIdAndUpdate(
+  referralId,
+  {
+    aiEvaluation: {
+      ...aiResult,
+      evaluatedAt: new Date(),
+    },
+  },
+  { runValidators: true }
+);
 
     console.log("🎉 AI evaluation saved successfully");
   } catch (err: any) {

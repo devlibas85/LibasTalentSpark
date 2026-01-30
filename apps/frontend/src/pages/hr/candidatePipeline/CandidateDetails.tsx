@@ -63,6 +63,27 @@ const statusConfig: Record<
     icon: CheckCircle2,
   },
 };
+const calculateATSScore = (ai?: Referral["aiEvaluation"]) => {
+  if (!ai) return 0;
+
+  const scores = [
+    ai.keyword_score,
+    ai.skills_score,
+    ai.exp_score,
+    ai.title_similarity,
+  ].filter((v): v is number => typeof v === "number");
+
+  if (scores.length === 0) return 0;
+
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+};
+
+const scoreColor = (score: number) => {
+  if (score >= 80) return "text-green-600";
+  if (score >= 60) return "text-yellow-600";
+  return "text-red-600";
+};
+
 
 export const CandidateDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -562,6 +583,114 @@ export const CandidateDetails = () => {
               </div>
             </div>
           </div>
+          {/* ATS Scan Result */}
+<motion.div
+  initial={{ opacity: 0, x: 20 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ delay: 0.05 }}
+  className="bg-card border rounded-2xl p-6"
+>
+  <h3 className="font-semibold mb-4 flex items-center gap-2">
+    <FileText size={18} className="text-primary" />
+    ATS Scan Result
+  </h3>
+
+  {referral.aiEvaluation ? (
+    (() => {
+      const ats = calculateATSScore(referral.aiEvaluation);
+
+      return (
+        <div className="space-y-4">
+          {/* Overall ATS */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm text-muted-foreground">
+                Overall Match
+              </span>
+              <span className={`font-bold ${scoreColor(ats)}`}>
+                {ats}%
+              </span>
+            </div>
+
+            <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${ats}%` }}
+                transition={{ duration: 0.6 }}
+                className={`h-full ${
+                  ats >= 80
+                    ? "bg-green-500"
+                    : ats >= 60
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Detailed Scores */}
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Keyword Match</span>
+              <span>{referral.aiEvaluation.keyword_score ?? "—"}%</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Skills Match</span>
+              <span>{referral.aiEvaluation.skills_score ?? "—"}%</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Experience Match</span>
+              <span>{referral.aiEvaluation.exp_score ?? "—"}%</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Title Similarity</span>
+              <span>{referral.aiEvaluation.title_similarity ?? "—"}%</span>
+            </div>
+          </div>
+
+          {/* Keyword Insights */}
+          <div className="pt-3 border-t text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Matched Keywords
+              </span>
+              <span className="font-medium text-green-600">
+                {referral.aiEvaluation.matched_keywords ?? 0}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">
+                Missing Keywords
+              </span>
+              <span className="font-medium text-red-600">
+                {referral.aiEvaluation.missing_keywords ?? 0}
+              </span>
+            </div>
+          </div>
+
+          {/* Meta */}
+          {referral.aiEvaluation.evaluatedAt && (
+            <p className="text-xs text-muted-foreground pt-2">
+              Last scanned on{" "}
+              {new Date(
+                referral.aiEvaluation.evaluatedAt
+              ).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      );
+    })()
+  ) : (
+    <div className="text-center py-6 text-muted-foreground text-sm">
+      ATS evaluation pending…
+    </div>
+  )}
+</motion.div>
+
 
           {/* Right Column - Actions & Quick Stats */}
           <div className="space-y-6">

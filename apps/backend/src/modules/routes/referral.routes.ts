@@ -46,11 +46,14 @@ router.post(
     res.status(201).json(referral);
 
     // 🚀 AI call runs AFTER response
-    triggerAIAsync({
-     referralId: referral._id.toString(),
-      jobId,
-      resumePath: req.file.path,
-    });
+    setImmediate(() => {
+  triggerAIAsync({
+    referralId: referral._id.toString(),
+    jobId,
+    resumePath: req.file.path,
+  });
+});
+
   }
 );
 

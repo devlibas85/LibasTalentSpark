@@ -49,10 +49,26 @@ const getStageFromStatus = (status: ReferralStatus): Candidate["stage"] => {
     submitted: "applied",
     under_review: "screening",
     interview_scheduled: "interview",
-    rejected: "applied", // You might want to handle this differently
+    rejected: "applied", 
     hired: "hired",
   };
   return statusMap[status] || "applied";
+};
+const calculateAtsScore = (ai?: Referral["aiEvaluation"]) => {
+  if (!ai) return 0;
+
+  const scores = [
+    ai.keyword_score,
+    ai.skills_score,
+    ai.exp_score,
+    ai.title_similarity,
+  ].filter((v): v is number => typeof v === "number");
+
+  if (scores.length === 0) return 0;
+
+  return Math.round(
+    scores.reduce((a, b) => a + b, 0) / scores.length
+  );
 };
 
 export default function CandidatePipeline() {
@@ -92,7 +108,8 @@ export default function CandidatePipeline() {
       appliedDate: r.createdAt,
       rating: 4.5, 
       avatar: initials,
-      atsScore: r.atsScore ?? 0, 
+     atsScore: calculateAtsScore(r.aiEvaluation),
+
     };
   });
   const getAtsMeta = (score: number) => {
@@ -159,8 +176,8 @@ export default function CandidatePipeline() {
         </div>
       </div>
       {/* ATS Score */}
-<div className="mt-4">
-  {(() => {
+{candidate.atsScore > 0 ? (
+  (() => {
     const { label, color } = getAtsMeta(candidate.atsScore);
     return (
       <>
@@ -181,8 +198,13 @@ export default function CandidatePipeline() {
         </div>
       </>
     );
-  })()}
-</div>
+  })()
+) : (
+  <p className="text-xs text-muted-foreground mt-2">
+    AI evaluation pending…
+  </p>
+)}
+
 
 
       {/* Skills */}

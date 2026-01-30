@@ -8,6 +8,21 @@ export type ReferralStatus =
   | "rejected"
   | "hired";
 
+  export interface AIEvaluation {
+  keyword_score?: number;
+  title_similarity?: number;
+  skills_score?: number;
+  exp_score?: number;
+  jd_title?: number;
+  resume_title?: number;
+  jd_years?: number;
+  resume_years?: number;
+  matched_keywords?: number;
+  missing_keywords?: number;
+  evaluatedAt?: string;
+}
+
+
 export interface Referral {
   _id: string;
  atsScore?: number;
@@ -38,6 +53,8 @@ export interface Referral {
     actionBy: string;
     actionAt: string;
   }>;
+
+    aiEvaluation?: AIEvaluation;
 
   deleted: boolean;
   createdAt: string;
