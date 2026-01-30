@@ -76,6 +76,13 @@ export const CandidateDetails = () => {
 
   const referral = referrals.find((r: Referral) => r._id === id);
 
+  const getAtsMeta = (score = 0) => {
+  if (score >= 80) return { label: "Strong Match", color: "bg-green-500" };
+  if (score >= 60) return { label: "Medium Match", color: "bg-yellow-500" };
+  return { label: "Low Match", color: "bg-red-500" };
+};
+
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -162,6 +169,34 @@ export const CandidateDetails = () => {
                 <p className="text-sm text-muted-foreground mt-0.5">
                   Applied for {referral.job?.title || "Unknown Position"}
                 </p>
+                {/* ATS Score */}
+<div className="mt-4 max-w-md">
+  {(() => {
+    const score = referral.atsScore ?? 0;
+    const { label, color } = getAtsMeta(score);
+
+    return (
+      <>
+        <div className="flex items-center justify-between mb-1 text-sm">
+          <span className="text-muted-foreground">ATS Resume Match</span>
+          <span className="font-semibold">
+            {score}% · {label}
+          </span>
+        </div>
+
+        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${score}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className={`h-full ${color}`}
+          />
+        </div>
+      </>
+    );
+  })()}
+</div>
+
               </div>
             </div>
 

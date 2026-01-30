@@ -32,6 +32,7 @@ interface Candidate {
   avatar: string;
   salary: string;
   skills: string[];
+   atsScore: number;
 }
 
 const stages = [
@@ -83,16 +84,25 @@ export default function CandidatePipeline() {
       email: r.candidateEmail,
       phone: r.candidatePhone,
       position: r.job?.title || "—",
-      location: r.job?.location || "Remote", // Provide a default
-      experience: "Not specified", // Not in backend schema yet
+      location: r.job?.location || "Remote", 
+      experience: "Not specified", 
       salary: "—",
-      skills: [], // Not in backend schema yet
+      skills: [], 
       stage: getStageFromStatus(r.status),
       appliedDate: r.createdAt,
-      rating: 4.5, // Placeholder - consider adding to backend
+      rating: 4.5, 
       avatar: initials,
+      atsScore: r.atsScore ?? 0, 
     };
   });
+  const getAtsMeta = (score: number) => {
+  if (score >= 80)
+    return { label: "Strong Match", color: "bg-green-500" };
+  if (score >= 60)
+    return { label: "Medium Match", color: "bg-yellow-500" };
+  return { label: "Low Match", color: "bg-red-500" };
+};
+
 
   const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch =
@@ -148,6 +158,32 @@ export default function CandidatePipeline() {
           <span>Applied {new Date(candidate.appliedDate).toLocaleDateString()}</span>
         </div>
       </div>
+      {/* ATS Score */}
+<div className="mt-4">
+  {(() => {
+    const { label, color } = getAtsMeta(candidate.atsScore);
+    return (
+      <>
+        <div className="flex items-center justify-between text-xs mb-1">
+          <span className="text-muted-foreground">ATS Score</span>
+          <span className="font-medium">
+            {candidate.atsScore}% • {label}
+          </span>
+        </div>
+
+        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${candidate.atsScore}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className={`h-full ${color}`}
+          />
+        </div>
+      </>
+    );
+  })()}
+</div>
+
 
       {/* Skills */}
       {candidate.skills.length > 0 && (

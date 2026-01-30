@@ -10,7 +10,7 @@ export type ReferralStatus =
 
 export interface Referral {
   _id: string;
-
+ atsScore?: number;
   candidateName: string;
   candidateEmail: string;
   candidatePhone: string;
