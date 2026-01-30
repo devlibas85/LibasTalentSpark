@@ -19,7 +19,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // HR Pages
 import PostJob from "./pages/hr/PostJob";
 import ManageJobs from "./pages/hr/ManageJobs";
-import CandidatePipeline from "./pages/hr/CandidatePipeline";
+import CandidatePipeline from "./pages/hr/candidatePipeline/CandidatePipeline";
 import ReferralsManagement from "./pages/hr/RefralManagement";
 import ReportsAnalytics from "./pages/hr/ReportAnalysis";
 
@@ -28,6 +28,8 @@ import BrowseJobs from "./pages/employee/BrowseJobs";
 import MyApplications from "./pages/employee/MyApplications";
 import ReferCandidate from "./pages/employee/ReferCandidates";
 import MyReferrals from "./pages/employee/MyRefrals";
+import { CandidateDetails } from "./pages/hr/candidatePipeline/CandidateDetails";
+import { MyReferralDetails } from "./pages/employee/MyRefralsDetails";
 
 function App() {
   const role = useSelector((state: RootState) => state.auth.role);
@@ -99,6 +101,15 @@ function App() {
             </DashboardLayout>
           }
         />
+        <Route
+  path="/candidates/:id"
+  element={
+    <DashboardLayout role="hr">
+      <CandidateDetails />
+    </DashboardLayout>
+  }
+/>
+
 
         <Route
           path="/referrals-manage"
@@ -155,6 +166,15 @@ function App() {
           }
         />
       </Route>
+       <Route
+          path="/my-referrals/:id"
+          element={
+            <DashboardLayout role="employee">
+              <MyReferralDetails />
+            </DashboardLayout>
+          }
+        />
+     
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />

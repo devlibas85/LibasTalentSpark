@@ -1,5 +1,6 @@
 // store/referralApi.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+
 export type ReferralStatus =
   | "submitted"
   | "under_review"
@@ -32,7 +33,15 @@ export interface Referral {
     email: string;
   };
 
+  actionHistory?: Array<{
+    action: string;
+    actionBy: string;
+    actionAt: string;
+  }>;
+
+  deleted: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export const referralApi = createApi({
@@ -52,58 +61,57 @@ export const referralApi = createApi({
   tagTypes: ['Referrals'],
   endpoints: (builder) => ({
     // Get user's referrals
-  getMyReferrals: builder.query<Referral[], void>({
-  query: () => "/referrals/my-referrals",
-  providesTags: ["Referrals"],
-}),
+    getMyReferrals: builder.query<Referral[], void>({
+      query: () => "/referrals/my-referrals",
+      providesTags: ["Referrals"],
+    }),
 
-getAllReferrals: builder.query<Referral[], void>({
-  query: () => "/referrals",
-  providesTags: ["Referrals"],
-}),
+    getAllReferrals: builder.query<Referral[], void>({
+      query: () => "/referrals",
+      providesTags: ["Referrals"],
+    }),
     
     // Submit a new referral
-   submitReferral: builder.mutation<
-  unknown,
-  {
-    candidateName: string;
-    candidateEmail: string;
-    candidatePhone: string;
-    relationship: string;
-    notes: string;
-    jobId: string;
-    resumeFile?: File | null;
-  }
->({
-  query: (data) => {
-    // ✅ Create FormData INSIDE API layer
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (key === "resumeFile" && value instanceof File) {
-          formData.append("resume", value);
-        } else {
-          formData.append(key, value as string);
-        }
+    submitReferral: builder.mutation<
+      unknown,
+      {
+        candidateName: string;
+        candidateEmail: string;
+        candidatePhone: string;
+        relationship: string;
+        notes: string;
+        jobId: string;
+        resumeFile?: File | null;
       }
-    });
+    >({
+      query: (data) => {
+        // ✅ Create FormData INSIDE API layer
+        const formData = new FormData();
 
-    // 🔍 LOG WHAT IS BEING SENT
-    console.log("📤 Submitting referral payload:");
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
-    }
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === "resumeFile" && value instanceof File) {
+              formData.append("resume", value);
+            } else {
+              formData.append(key, value as string);
+            }
+          }
+        });
 
-    return {
-      url: "/referrals",
-      method: "POST",
-      body: formData,
-    };
-  },
-  invalidatesTags: ["Referrals"],
-}),
+        // 🔍 LOG WHAT IS BEING SENT
+        console.log("📤 Submitting referral payload:");
+        for (const [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
 
+        return {
+          url: "/referrals",
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["Referrals"],
+    }),
   }),
 });
 

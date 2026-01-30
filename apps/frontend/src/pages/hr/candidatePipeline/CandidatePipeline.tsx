@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useGetAllReferralsQuery } from "@/store/refralApi";
 import type { Referral, ReferralStatus } from "@/store/refralApi";
+import { useNavigate } from "react-router-dom";
 
 import {
   Search,
@@ -64,6 +65,8 @@ export default function CandidatePipeline() {
   const [selectedStage, setSelectedStage] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
 
+  const navigate = useNavigate();
+
   // Safe mapping with fallbacks
   const candidates: Candidate[] = referrals.map((r: Referral) => {
     // Get initials for avatar
@@ -110,6 +113,7 @@ export default function CandidatePipeline() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-card border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+       onClick={() => navigate(`/candidates/${candidate.id}`)}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
