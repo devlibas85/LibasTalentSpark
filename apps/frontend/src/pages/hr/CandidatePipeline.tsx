@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useGetAllReferralsQuery } from "@/store/refralApi";
+import type { Referral, ReferralStatus } from "@/store/refralApi";
+
 import {
   Search,
   Filter,
-  
   Mail,
-  
   MapPin,
   Briefcase,
   Star,
@@ -14,7 +15,6 @@ import {
   MoreVertical,
   ChevronRight,
   Clock,
-  
 } from "lucide-react";
 
 interface Candidate {
@@ -41,119 +41,55 @@ const stages = [
   { id: "hired", label: "Hired", color: "bg-emerald-500" },
 ];
 
+// Helper function to map referral status to stage
+const getStageFromStatus = (status: ReferralStatus): Candidate["stage"] => {
+  const statusMap: Record<ReferralStatus, Candidate["stage"]> = {
+    submitted: "applied",
+    under_review: "screening",
+    interview_scheduled: "interview",
+    rejected: "applied", // You might want to handle this differently
+    hired: "hired",
+  };
+  return statusMap[status] || "applied";
+};
+
 export default function CandidatePipeline() {
+  const {
+    data: referrals = [],
+    isLoading,
+    isError,
+  } = useGetAllReferralsQuery();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStage, setSelectedStage] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"board" | "list">("board");
 
-  // Sample data
-  const candidates: Candidate[] = [
-    {
-      id: "1",
-      name: "Rahul Sharma",
-      email: "rahul.sharma@email.com",
-      phone: "+91 98765 43210",
-      position: "Senior React Developer",
-      location: "Bangalore",
-      experience: "5 years",
-      stage: "applied",
-      appliedDate: "2026-01-25",
-      rating: 4.5,
-      avatar: "RS",
-      salary: "₹15 LPA",
-      skills: ["React", "TypeScript", "Node.js"],
-    },
-    {
-      id: "2",
-      name: "Priya Patel",
-      email: "priya.patel@email.com",
-      phone: "+91 98765 43211",
-      position: "Product Designer",
-      location: "Mumbai",
-      experience: "3 years",
-      stage: "screening",
-      appliedDate: "2026-01-24",
-      rating: 4.8,
-      avatar: "PP",
-      salary: "₹12 LPA",
-      skills: ["Figma", "UI/UX", "Prototyping"],
-    },
-    {
-      id: "3",
-      name: "Amit Kumar",
-      email: "amit.kumar@email.com",
-      phone: "+91 98765 43212",
-      position: "Senior React Developer",
-      location: "Delhi",
-      experience: "6 years",
-      stage: "interview",
-      appliedDate: "2026-01-22",
-      rating: 4.6,
-      avatar: "AK",
-      salary: "₹16 LPA",
-      skills: ["React", "Redux", "GraphQL"],
-    },
-    {
-      id: "4",
-      name: "Sneha Reddy",
-      email: "sneha.reddy@email.com",
-      phone: "+91 98765 43213",
-      position: "QA Engineer",
-      location: "Hyderabad",
-      experience: "4 years",
-      stage: "offer",
-      appliedDate: "2026-01-20",
-      rating: 4.7,
-      avatar: "SR",
-      salary: "₹10 LPA",
-      skills: ["Selenium", "Jest", "Automation"],
-    },
-    {
-      id: "5",
-      name: "Vikram Singh",
-      email: "vikram.singh@email.com",
-      phone: "+91 98765 43214",
-      position: "Marketing Manager",
-      location: "Pune",
-      experience: "7 years",
-      stage: "hired",
-      appliedDate: "2026-01-18",
-      rating: 4.9,
-      avatar: "VS",
-      salary: "₹20 LPA",
-      skills: ["SEO", "Analytics", "Strategy"],
-    },
-    {
-      id: "6",
-      name: "Anjali Mehta",
-      email: "anjali.mehta@email.com",
-      phone: "+91 98765 43215",
-      position: "Senior React Developer",
-      location: "Bangalore",
-      experience: "5 years",
-      stage: "applied",
-      appliedDate: "2026-01-26",
-      rating: 4.4,
-      avatar: "AM",
-      salary: "₹14 LPA",
-      skills: ["React", "Next.js", "AWS"],
-    },
-    {
-      id: "7",
-      name: "Rohan Gupta",
-      email: "rohan.gupta@email.com",
-      phone: "+91 98765 43216",
-      position: "Product Designer",
-      location: "Noida",
-      experience: "2 years",
-      stage: "screening",
-      appliedDate: "2026-01-25",
-      rating: 4.2,
-      avatar: "RG",
-      salary: "₹9 LPA",
-      skills: ["Sketch", "Adobe XD", "Design Systems"],
-    },
-  ];
+  // Safe mapping with fallbacks
+  const candidates: Candidate[] = referrals.map((r: Referral) => {
+    // Get initials for avatar
+    const initials = r.candidateName
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+
+    return {
+      id: r._id,
+      name: r.candidateName,
+      email: r.candidateEmail,
+      phone: r.candidatePhone,
+      position: r.job?.title || "—",
+      location: r.job?.location || "Remote", // Provide a default
+      experience: "Not specified", // Not in backend schema yet
+      salary: "—",
+      skills: [], // Not in backend schema yet
+      stage: getStageFromStatus(r.status),
+      appliedDate: r.createdAt,
+      rating: 4.5, // Placeholder - consider adding to backend
+      avatar: initials,
+    };
+  });
 
   const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch =
@@ -210,16 +146,18 @@ export default function CandidatePipeline() {
       </div>
 
       {/* Skills */}
-      <div className="flex flex-wrap gap-1 mt-3">
-        {candidate.skills.slice(0, 3).map((skill) => (
-          <span
-            key={skill}
-            className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs"
-          >
-            {skill}
-          </span>
-        ))}
-      </div>
+      {candidate.skills.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-3">
+          {candidate.skills.slice(0, 3).map((skill) => (
+            <span
+              key={skill}
+              className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-4 pt-3 border-t">
@@ -241,6 +179,22 @@ export default function CandidatePipeline() {
       </div>
     </motion.div>
   );
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-muted-foreground">
+        Loading candidate pipeline...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-6 text-red-500">
+        Failed to load candidates
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

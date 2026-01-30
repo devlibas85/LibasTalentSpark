@@ -19,6 +19,14 @@ import CandidatePipeline from "./pages/hr/CandidatePipeline";
 import ReferralsManagement from "./pages/hr/RefralManagement";
 import ReportsAnalytics from "./pages/hr/ReportAnalysis";
 
+// EMPLOYEE Pages
+
+import BrowseJobs from "./pages/employee/BrowseJobs";
+import MyApplications from "./pages/employee/MyApplications";
+import ReferCandidate from "./pages/employee/ReferCandidates";
+import MyReferrals from "./pages/employee/MyRefrals";
+
+
 function App() {
   useEffect(() => {
     getHealth().then(console.log);
@@ -102,6 +110,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      
 
       <Route
         path="/profile"
@@ -124,6 +133,50 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+  path="/browse-jobs"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout role="employee">
+        <BrowseJobs />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/applications"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout role="employee">
+        <MyApplications />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/refer"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout role="employee">
+        <ReferCandidate />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/my-referrals"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout role="employee">
+        <MyReferrals />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
+
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />
