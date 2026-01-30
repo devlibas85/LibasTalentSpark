@@ -74,6 +74,18 @@ const referralSchema = new Schema(
       ],
       default: "submitted",
     },
+aiEvaluation: {
+  keyword_score: Number,
+  title_similarity: Number,
+  skills_score: Number,
+  exp_score: Number,
+  jd_title: Number,
+  resume_title: Number,
+  jd_years: Number,
+  resume_years: Number,
+  matched_keywords: Number,
+  missing_keywords: Number,
+},
 
     // ===== HR / SYSTEM LOGS =====
     actionHistory: [referralActionSchema],

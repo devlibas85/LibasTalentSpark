@@ -2,6 +2,7 @@ import express, { type Request } from "express";
 import { Referral } from "../models/referral.Models.js";
 import { requireAuth } from "../middlewares/requireAuth.middleware.js";
 import { uploadResume } from "../middlewares/uploadResume.middleware.js";
+import { triggerAIAsync } from "../middlewares/aiServices.js";
 
 const router = express.Router();
 
@@ -13,49 +14,46 @@ router.post(
   "/",
   requireAuth,
   uploadResume.single("resume"),
-  async (req: Request, res) => {
-    try {
-      const {
-        candidateName,
-        candidateEmail,
-        candidatePhone,
-        relationship,
-        notes,
-        jobId,
-      } = req.body;
+  async (req: any, res) => {
+    const {
+      candidateName,
+      candidateEmail,
+      candidatePhone,
+      relationship,
+      notes,
+      jobId,
+    } = req.body;
 
-      if (!req.user) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
+    // ✅ Create referral immediately
+    const referral = await Referral.create({
+      candidateName,
+      candidateEmail,
+      candidatePhone,
+      relationship,
+      notes,
+      job: jobId,
+      referredBy: req.user._id,
+      resume: req.file.path,
+      actionHistory: [
+        {
+          action: "submitted",
+          actionBy: req.user._id,
+        },
+      ],
+    });
 
-      if (!req.file) {
-        return res.status(400).json({ error: "Resume is required" });
-      }
+    
+    res.status(201).json(referral);
 
-      const referral = await Referral.create({
-        candidateName,
-        candidateEmail,
-        candidatePhone,
-        relationship,
-        notes,
-        job: jobId,
-        referredBy: req.user._id,
-        resume: req.file.path,
-        actionHistory: [
-          {
-            action: "submitted",
-            actionBy: req.user._id,
-          },
-        ],
-      });
-
-      return res.status(201).json(referral);
-    } catch (error) {
-      console.error("❌ Referral creation failed:", error);
-      return res.status(500).json({ error: "Failed to submit referral" });
-    }
+    // 🚀 AI call runs AFTER response
+    triggerAIAsync({
+     referralId: referral._id.toString(),
+      jobId,
+      resumePath: req.file.path,
+    });
   }
 );
+
 
 /**
  * GET /api/referrals

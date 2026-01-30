@@ -1,5 +1,105 @@
-/* eslint-disable react-hooks/purity */
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { useGetJobsQuery } from "@/store/jobApi";
+import type { Job } from "@/types/job";
+import { useGetAllReferralsQuery } from "@/store/refralApi";
+
+const pipelineStages = ["Applied", "Screening", "Interview", "Offer", "Hired"];
+
 export default function HRDashboard() {
+  const navigate = useNavigate();
+
+  // API calls
+  const {
+    data: allJobs = [],
+    isLoading,
+    isError,
+  } = useGetJobsQuery();
+  
+  const { data: referrals = [] } = useGetAllReferralsQuery();
+
+  // Memoized calculations
+  const referredJobsCount = useMemo(() => {
+    const uniqueJobIds = new Set<string>();
+
+    referrals.forEach((ref) => {
+      if (ref.job) {
+        // handles both populated & non-populated job
+        const jobId =
+          typeof ref.job === "string" ? ref.job : ref.job._id;
+
+        if (jobId) {
+          uniqueJobIds.add(jobId);
+        }
+      }
+    });
+
+    return uniqueJobIds.size;
+  }, [referrals]);
+
+  const referredJobIds = useMemo(() => {
+    const set = new Set<string>();
+
+    referrals.forEach((ref) => {
+      if (ref.job) {
+        const jobId =
+          typeof ref.job === "string" ? ref.job : ref.job._id;
+
+        if (jobId) {
+          set.add(jobId);
+        }
+      }
+    });
+
+    return set;
+  }, [referrals]);
+
+  const activeJobs = useMemo(() => {
+    return allJobs.filter(
+      (job: Job) => job.status === "published" && !job.deleted
+    );
+  }, [allJobs]);
+
+  const jobsWithoutReferrals = useMemo(() => {
+    return allJobs.filter(
+      (job: Job) =>
+        job.status === "published" &&
+        !job.deleted &&
+        !referredJobIds.has(job._id)
+    );
+  }, [allJobs, referredJobIds]);
+
+  const pendingReferralsCount = jobsWithoutReferrals.length;
+
+  const pipelineCounts = useMemo(() => {
+    return pipelineStages.reduce<Record<string, number>>((acc, stage) => {
+      // eslint-disable-next-line react-hooks/purity
+      acc[stage] = Math.floor(Math.random() * 30);
+      return acc;
+    }, {});
+  }, []);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <p className="text-muted-foreground">Loading dashboard…</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <p className="text-red-600 dark:text-red-400">
+          Failed to load dashboard data
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -13,21 +113,44 @@ export default function HRDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
-          { label: "Active Jobs", value: 12 },
-          { label: "New Applications", value: 38 },
-          { label: "Interviews", value: 9 },
+          { label: "Active Jobs", value: activeJobs.length },
+          { label: "New Applications", value: referredJobsCount },
+          { label: "Interviews", value: 0 },
           { label: "Candidates", value: 142 },
-          { label: "Hires (Month)", value: 3 },
-          { label: "Pending Referrals", value: 7 },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="bg-card border rounded-xl p-4"
-          >
-            <p className="text-sm text-muted-foreground">{item.label}</p>
-            <p className="text-2xl font-bold mt-1">{item.value}</p>
-          </div>
-        ))}
+          { label: "Hires (Month)", value: 0 },
+          { label: "Pending Referrals", value: pendingReferralsCount },
+        ].map((item) => {
+          const isActiveJobs = item.label === "Active Jobs";
+          
+          const handleStatClick = (label: string) => {
+            switch (label) {
+              case "Active Jobs":
+                navigate("/jobs/manage");
+                break;
+
+              case "New Applications":
+                navigate("/candidates"); // ✅ Candidate Pipeline
+                break;
+
+              default:
+                break;
+            }
+          };
+          
+          return (
+            <div
+              key={item.label}
+              onClick={() => handleStatClick(item.label)}
+              className={`
+                bg-card border rounded-xl p-4
+                ${isActiveJobs ? "cursor-pointer hover:shadow-md transition" : ""}
+              `}
+            >
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="text-2xl font-bold mt-1">{item.value}</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* Middle section */}
@@ -36,17 +159,14 @@ export default function HRDashboard() {
         <div className="bg-card border rounded-xl p-4 lg:col-span-2">
           <h2 className="font-semibold mb-4">Candidate Pipeline</h2>
           <div className="grid grid-cols-5 gap-2 text-center text-sm">
-            {["Applied", "Screening", "Interview", "Offer", "Hired"].map(
-              (stage) => (
-                <div key={stage}>
-                  <p className="font-medium">{stage}</p>
-                  <p className="text-lg font-bold text-primary mt-1">
-                    
-                    {Math.floor(Math.random() * 30)}
-                  </p>
-                </div>
-              )
-            )}
+            {pipelineStages.map((stage) => (
+              <div key={stage}>
+                <p className="font-medium">{stage}</p>
+                <p className="text-lg font-bold text-primary mt-1">
+                  {pipelineCounts[stage]}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 

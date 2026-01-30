@@ -12,7 +12,7 @@ const editLogSchema = new Schema(
       default: Date.now,
     },
     changes: {
-      type: Object, //  snapshot
+      type: Object,
     },
   },
   { _id: false }
@@ -21,27 +21,90 @@ const editLogSchema = new Schema(
 const jobSchema = new Schema(
   {
     // ===== CORE JOB DATA =====
-    title: { type: String, required: true },
-    department: { type: String, required: true },
-    location: { type: String, required: true },
-    jobType: { type: String, required: true },
-    experienceLevel: { type: String, required: true },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    salaryMin: { type: Number },
-    salaryMax: { type: Number },
-    openings: { type: Number },
+    department: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    deadline: { type: Date },
+    location: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    description: { type: String, required: true },
-    responsibilities: { type: String },
-    requirements: { type: String },
-    skills: [{ type: String }],
-    benefits: { type: String },
+    jobType: {
+      type: String,
+      required: true,
+    },
 
+    experienceLevel: {
+      type: String,
+      required: true,
+    },
+
+    salaryMin: {
+      type: Number,
+      min: 0,
+    },
+
+    salaryMax: {
+      type: Number,
+      min: 0,
+    },
+
+    openings: {
+      type: Number,
+      min: 1,
+      default: 1,
+    },
+
+    deadline: {
+      type: Date,
+    },
+
+    description: {
+      type: String,
+      required: true,
+    },
+
+    responsibilities: {
+      type: String,
+    },
+
+    requirements: {
+      type: String,
+    },
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    benefits: {
+      type: String,
+    },
+
+    // ===== JD PDF (IMPORTANT) =====
     jdPdf: {
-  type: String, // file path or URL
-},
+      type: String, // file path or URL
+      validate: {
+        validator: function (this: any, value: string) {
+          // JD required only if job is published
+          if (this.status === "published") {
+            return !!value;
+          }
+          return true;
+        },
+        message: "JD PDF is required for published jobs",
+      },
+    },
 
     // ===== OWNERSHIP =====
     createdBy: {
@@ -54,26 +117,32 @@ const jobSchema = new Schema(
     status: {
       type: String,
       enum: ["draft", "published", "closed"],
-      default: "published",
+      default: "draft",
     },
 
     // ===== AUDIT LOGS =====
-    editHistory: [editLogSchema],
+    editHistory: {
+      type: [editLogSchema],
+      default: [],
+    },
 
+    // ===== SOFT DELETE =====
     deleted: {
       type: Boolean,
       default: false,
     },
+
     deletedAt: {
       type: Date,
     },
+
     deletedBy: {
       type: Types.ObjectId,
       ref: "User",
     },
   },
   {
-    timestamps: true, 
+    timestamps: true,
     versionKey: false,
   }
 );

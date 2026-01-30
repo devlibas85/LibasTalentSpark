@@ -18,6 +18,7 @@ import {
 
 interface Referral {
   id: string;
+    job: string; 
   candidateName: string;
   candidateEmail: string;
   candidatePhone: string;
@@ -42,6 +43,7 @@ export default function ReferralsManagement() {
   const referrals: Referral[] = [
     {
       id: "1",
+      job:"dfsadfsda",
       candidateName: "Arjun Malhotra",
       candidateEmail: "arjun.m@email.com",
       candidatePhone: "+91 98765 43210",
@@ -57,6 +59,7 @@ export default function ReferralsManagement() {
     },
     {
       id: "2",
+      job:"gefsgefwgv",
       candidateName: "Pooja Desai",
       candidateEmail: "pooja.d@email.com",
       candidatePhone: "+91 98765 43211",
@@ -72,6 +75,7 @@ export default function ReferralsManagement() {
     },
     {
       id: "3",
+      job: "fsadfsda ",
       candidateName: "Karan Singh",
       candidateEmail: "karan.s@email.com",
       candidatePhone: "+91 98765 43212",
@@ -87,6 +91,7 @@ export default function ReferralsManagement() {
     },
     {
       id: "4",
+      job: "gfsgsa ",
       candidateName: "Neha Gupta",
       candidateEmail: "neha.g@email.com",
       candidatePhone: "+91 98765 43213",
@@ -102,6 +107,7 @@ export default function ReferralsManagement() {
     },
     {
       id: "5",
+      job: " gsadg s",
       candidateName: "Rohit Verma",
       candidateEmail: "rohit.v@email.com",
       candidatePhone: "+91 98765 43214",

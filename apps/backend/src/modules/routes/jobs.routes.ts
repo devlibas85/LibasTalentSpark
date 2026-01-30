@@ -24,9 +24,9 @@ router.post(
         responsibilities,
         requirements,
         benefits,
+        status,
       } = req.body;
 
-      // ✅ Parse skills properly
       const skills = req.body.skills
         ? JSON.parse(req.body.skills)
         : [];
@@ -39,7 +39,13 @@ router.post(
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      // ✅ Build object safely
+      // 🔒 JD REQUIRED ONLY WHEN PUBLISHING
+      if (status === "published" && !req.file) {
+        return res.status(400).json({
+          error: "JD PDF is required to publish a job",
+        });
+      }
+
       const jobData: any = {
         title,
         department,
@@ -55,10 +61,10 @@ router.post(
         requirements,
         skills,
         benefits,
+        status: status || "draft",
         createdBy: req.user._id,
       };
 
-      // ✅ Only add jdPdf if it exists
       if (req.file) {
         jobData.jdPdf = req.file.path;
       }
@@ -72,6 +78,7 @@ router.post(
     }
   }
 );
+
 
 
 router.get("/", async (_req, res) => {
