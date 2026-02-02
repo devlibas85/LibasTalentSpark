@@ -17,8 +17,8 @@ import DashboardLayout from "./components/layouts/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // HR Pages
-import PostJob from "./pages/hr/PostJob";
-import ManageJobs from "./pages/hr/ManageJobs";
+import PostJob from "./pages/hr/jobs/PostJob";
+import ManageJobs from "./pages/hr/jobs/ManageJobs";
 import CandidatePipeline from "./pages/hr/candidatePipeline/CandidatePipeline";
 import ReferralsManagement from "./pages/hr/RefralManagement";
 import ReportsAnalytics from "./pages/hr/ReportAnalysis";
@@ -30,6 +30,8 @@ import ReferCandidate from "./pages/employee/ReferCandidates";
 import MyReferrals from "./pages/employee/MyRefrals";
 import { CandidateDetails } from "./pages/hr/candidatePipeline/CandidateDetails";
 import { MyReferralDetails } from "./pages/employee/MyRefralsDetails";
+import ViewJobDetails from "./pages/hr/jobs/jobDetails";
+import EditJob from "./pages/hr/jobs/editJob";
 
 function App() {
   const role = useSelector((state: RootState) => state.auth.role);
@@ -92,6 +94,23 @@ function App() {
             </DashboardLayout>
           }
         />
+       <Route
+  path="/jobs/:jobId"
+  element={
+    <DashboardLayout role="hr">
+      <ViewJobDetails />
+    </DashboardLayout>
+  }
+/>
+ <Route
+  path="/jobs/edit/:jobId"
+  element={
+    <DashboardLayout role="hr">
+      <EditJob />
+    </DashboardLayout>
+  }
+/>
+
 
         <Route
           path="/candidates"

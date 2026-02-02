@@ -12,11 +12,14 @@ import {
   PauseCircle,
   MapPin,
   Briefcase,
-
   Calendar,
   Award,
 } from "lucide-react";
-import { useGetJobsQuery } from "@/store/api/jobApi";
+import {
+  useGetJobsQuery,
+  useToggleJobStatusMutation,
+  useDeleteJobMutation,
+} from "@/store/api/jobApi";
 import { useNavigate } from "react-router-dom";
 
 // Job Type Interface
@@ -59,8 +62,11 @@ export default function ManageJobs() {
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const [toggleStatus] = useToggleJobStatusMutation();
+  const [deleteJob] = useDeleteJobMutation();
 
-  const ITEMS_PER_PAGE = 8;
+  const ITEMS_PER_PAGE = 5;
 
   /* ===============================
      STATUS HELPERS (DB → UI)
@@ -76,8 +82,6 @@ export default function ManageJobs() {
         return "closed";
     }
   };
-
-
 
   const getStatusColor = (status: Job["status"]) => {
     switch (status) {
@@ -121,23 +125,22 @@ export default function ManageJobs() {
       matchesExperience
     );
   });
-const totalPages = Math.max(
-  1,
-  Math.ceil(filteredJobs.length / ITEMS_PER_PAGE)
-);
 
-const safeCurrentPage = Math.min(currentPage, totalPages);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredJobs.length / ITEMS_PER_PAGE)
+  );
+
+  const safeCurrentPage = Math.min(currentPage, totalPages);
 
   /* ===============================
      PAGINATION
      =============================== */
 
- 
- const paginatedJobs = filteredJobs.slice(
-  (safeCurrentPage - 1) * ITEMS_PER_PAGE,
-  safeCurrentPage * ITEMS_PER_PAGE
-);
-
+  const paginatedJobs = filteredJobs.slice(
+    (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+    safeCurrentPage * ITEMS_PER_PAGE
+  );
 
   /* ===============================
      SELECTION
@@ -165,9 +168,18 @@ const safeCurrentPage = Math.min(currentPage, totalPages);
     setShowMenu(null);
   };
 
-  const handleDeleteJob = (jobId: string) => {
-    // TODO: Implement delete functionality
-    console.log("Delete job:", jobId);
+  const handleDeleteJob = async (jobId: string) => {
+    if (!confirm("Are you sure you want to delete this job?")) {
+      return;
+    }
+
+    try {
+      await deleteJob(jobId).unwrap();
+      // Optional: Show success toast
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+      // Optional: Show error toast
+    }
     setShowMenu(null);
   };
 
@@ -177,9 +189,14 @@ const safeCurrentPage = Math.min(currentPage, totalPages);
     setShowMenu(null);
   };
 
-  const handleToggleStatus = (jobId: string) => {
-    // TODO: Implement status toggle
-    console.log("Toggle status:", jobId);
+  const handleToggleStatus = async (jobId: string) => {
+    try {
+      await toggleStatus(jobId).unwrap();
+      // Optional: Show success toast
+    } catch (error) {
+      console.error("Failed to toggle status:", error);
+      // Optional: Show error toast
+    }
     setShowMenu(null);
   };
 
@@ -225,7 +242,6 @@ const safeCurrentPage = Math.min(currentPage, totalPages);
       </div>
     );
   }
-
   return (
     <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
       {/* ================= HEADER ================= */}
@@ -580,7 +596,7 @@ const safeCurrentPage = Math.min(currentPage, totalPages);
                               </motion.div>
                             )}
                           </AnimatePresence>
-                        </div>
+                        </div>  
                       </td>
                     </motion.tr>
                   );

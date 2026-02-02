@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
-import { motion } from "framer-motion";
+
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -28,6 +29,9 @@ import {
 
 } from "@/store/api/jobApi";
 
+import { toast } from "sonner";
+
+
 interface JobFormData {
   title: string;
   department: string;
@@ -49,6 +53,9 @@ export default function PostJob() {
   const dispatch = useDispatch();
   const formData = useSelector((state: RootState) => state.jobForm);
 
+  const [submitMode, setSubmitMode] = useState<"draft" | "published">("published");
+
+
   const [createJob] = useCreateJobMutation();
   const navigate = useNavigate();
 
@@ -56,7 +63,6 @@ const [jdFile, setJdFile] = useState<File | null>(null);
 const [jdError, setJdError] = useState<string | null>(null);
 
   const [currentSkill, setCurrentSkill] = useState("");
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -99,6 +105,12 @@ const [jdError, setJdError] = useState<string | null>(null);
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  const toastId = toast.loading(
+    submitMode === "published"
+      ? "Publishing job..."
+      : "Saving draft..."
+  );
+
   const payload = new FormData();
 
   Object.entries(formData).forEach(([key, value]) => {
@@ -109,22 +121,35 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
   });
 
+  payload.append("status", submitMode); // ✅ FIX
+
   if (jdFile) {
     payload.append("jdPdf", jdFile);
   }
 
   try {
     await createJob(payload).unwrap();
-    setShowSuccess(true);
 
-    setTimeout(() => {
-      setShowSuccess(false);
-      navigate("/jobs/manage");
-    }, 800);
-  } catch (error) {
-    console.error("❌ Failed to create job:", error);
+    toast.success(
+      submitMode === "published"
+        ? "Job posted successfully!"
+        : "Draft saved",
+      {
+        id: toastId,
+      }
+    );
+
+    navigate("/jobs/manage");
+  } catch (error: any) {
+    toast.error("Failed to save job", {
+      id: toastId,
+      description:
+        error?.data?.error || "Please check details and try again",
+    });
   }
 };
+
+
 
 
 const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,15 +157,22 @@ const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   if (!file) return;
 
-  if (file.type !== "application/pdf") {
-    setJdError("Only PDF files are allowed");
-    return;
-  }
+if (file.type !== "application/pdf") {
+  setJdError("Only PDF files are allowed");
+  toast.error("Invalid file type", {
+    description: "Please upload a PDF file only",
+  });
+  return;
+}
 
-  if (file.size > 5 * 1024 * 1024) {
-    setJdError("PDF size must be under 5MB");
-    return;
-  }
+if (file.size > 5 * 1024 * 1024) {
+  setJdError("PDF size must be under 5MB");
+  toast.error("File too large", {
+    description: "PDF size must be under 5MB",
+  });
+  return;
+}
+
 
   setJdError(null);
   setJdFile(file);
@@ -209,26 +241,7 @@ const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
 </div>
 
 
-      {/* Success Message */}
-      {showSuccess && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-3"
-        >
-          <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-            <AlertCircle className="text-green-600 dark:text-green-400" size={20} />
-          </div>
-          <div>
-            <p className="font-medium text-green-900 dark:text-green-100">
-              Job Posted Successfully!
-            </p>
-            <p className="text-sm text-green-700 dark:text-green-300">
-              Your job posting is now live and visible to candidates.
-            </p>
-          </div>
-        </motion.div>
-      )}
+     
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -529,21 +542,28 @@ const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3">
-          <button
-            type="button"
-            className="px-6 py-2.5 rounded-lg border border-input hover:bg-accent transition-colors"
-          >
-            Save as Draft
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
-          >
-            <Upload size={18} />
-            Publish Job
-          </button>
-        </div>
+       <button
+  type="button"
+  onClick={() => {
+    setSubmitMode("draft");
+    toast.info("Draft saved", {
+      description: "You can continue editing later",
+    });
+  }}
+  className="px-6 py-2.5 rounded-lg border border-input hover:bg-accent transition-colors"
+>
+  Save as Draft
+</button>
+
+<button
+  type="submit"
+  onClick={() => setSubmitMode("published")}
+  className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2"
+>
+  <Upload size={18} />
+  Publish Job
+</button>
+
       </form>
     </div>
   );

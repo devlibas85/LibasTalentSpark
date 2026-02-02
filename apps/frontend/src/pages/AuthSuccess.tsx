@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setAuth } from "../store/slice/authSlice";
+import { toast } from "sonner";
+
 
 type DecodedToken = {
   email: string;
@@ -22,7 +24,9 @@ export default function AuthSuccess() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+   
   useEffect(() => {
+    const toastId = toast.loading("Signing you in..."); 
     const authenticate = () => {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -30,6 +34,7 @@ export default function AuthSuccess() {
         const token = tokenFromUrl || localStorage.getItem("auth_token");
 
         if (!token) {
+           toast.error("Authentication token missing", { id: toastId });
           navigate("/login", { replace: true });
           return;
         }
@@ -39,6 +44,9 @@ export default function AuthSuccess() {
         // 🔐 Token expiry check
         if (decoded.exp && decoded.exp * 1000 < Date.now()) {
           localStorage.removeItem("auth_token");
+           toast.error("Session expired. Please login again.", {
+            id: toastId,
+          });
           navigate("/login", { replace: true });
           return;
         }
@@ -55,11 +63,17 @@ export default function AuthSuccess() {
             role: roleMap[decoded.role],
           })
         );
+           toast.success(`Welcome back, ${decoded.name}!`, {
+          id: toastId,
+        });
 
         navigate("/dashboard", { replace: true });
       } catch (error) {
         console.error("Authentication failed:", error);
         localStorage.removeItem("auth_token");
+         toast.error("Authentication failed. Please login again.", {
+          id: toastId,
+        });
         navigate("/login", { replace: true });
       }
     };
