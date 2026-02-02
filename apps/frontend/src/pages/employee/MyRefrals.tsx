@@ -146,7 +146,7 @@ const MyReferrals = () => {
               </p>
             </div>
             <button
-              onClick={() => navigate("/submit-referral")}
+              onClick={() => navigate("/browse-jobs")}
               className="px-6 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 font-semibold shadow-lg hover:shadow-xl"
             >
               <Plus size={20} />

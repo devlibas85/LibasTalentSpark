@@ -19,10 +19,10 @@ import {
   ChevronDown,
   Plus,
   FolderKanban,
-  ClipboardList,
+  
   UserCircle2,
   Search,
-  Send,
+  
 } from "lucide-react";
 
 type Role = "hr" | "employee";
@@ -138,18 +138,8 @@ const { role, name, email } = useSelector(
       path: "/browse-jobs",
       roles: ["employee"],
     },
-    {
-      icon: ClipboardList,
-      label: "My Applications",
-      path: "/applications",
-      roles: ["employee"],
-    },
-    {
-      icon: Send,
-      label: "Refer a Candidate",
-      path: "/refer",
-      roles: ["employee"],
-    },
+  
+   
     {
       icon: UserPlus,
       label: "My Referrals",

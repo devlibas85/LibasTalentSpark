@@ -97,12 +97,7 @@ export const CandidateDetails = () => {
 
   const referral = referrals.find((r: Referral) => r._id === id);
 
-  const getAtsMeta = (score = 0) => {
-  if (score >= 80) return { label: "Strong Match", color: "bg-green-500" };
-  if (score >= 60) return { label: "Medium Match", color: "bg-yellow-500" };
-  return { label: "Low Match", color: "bg-red-500" };
-};
-
+  
 
   if (isLoading) {
     return (
@@ -170,74 +165,48 @@ export const CandidateDetails = () => {
     .toUpperCase()
     .slice(0, 2);
 
+
+
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-card border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/candidates")}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  {referral.candidateName}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Applied for {referral.job?.title || "Unknown Position"}
-                </p>
-                {/* ATS Score */}
-<div className="mt-4 max-w-md">
-  {(() => {
-    const score = referral.atsScore ?? 0;
-    const { label, color } = getAtsMeta(score);
-
-    return (
-      <>
-        <div className="flex items-center justify-between mb-1 text-sm">
-          <span className="text-muted-foreground">ATS Resume Match</span>
-          <span className="font-semibold">
-            {score}% · {label}
-          </span>
-        </div>
-
-        <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${score}%` }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className={`h-full ${color}`}
-          />
-        </div>
-      </>
-    );
-  })()}
-</div>
-
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
-                <Share2 size={16} />
-                Share
-              </button>
-              <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
-                <Edit size={16} />
-                Edit
-              </button>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                <MoreVertical size={20} />
-              </button>
-            </div>
-          </div>
+    <div className="bg-card border-b sticky top-0 z-10">
+  <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate("/candidates")}
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {referral.candidateName}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Applied for {referral.job?.title || "Unknown Position"}
+          </p>
         </div>
       </div>
 
+      <div className="flex items-center gap-3">
+        <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
+          <Share2 size={16} />
+          Share
+        </button>
+        <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
+          <Edit size={16} />
+          Edit
+        </button>
+        <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+          <MoreVertical size={20} />
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Info */}
@@ -584,7 +553,12 @@ export const CandidateDetails = () => {
             </div>
           </div>
           {/* ATS Scan Result */}
-<motion.div
+
+
+
+          {/* Right Column - Actions & Quick Stats */}
+          <div className="space-y-6">
+            <motion.div
   initial={{ opacity: 0, x: 20 }}
   animate={{ opacity: 1, x: 0 }}
   transition={{ delay: 0.05 }}
@@ -598,6 +572,10 @@ export const CandidateDetails = () => {
   {referral.aiEvaluation ? (
     (() => {
       const ats = calculateATSScore(referral.aiEvaluation);
+ const matchedSkills = referral.aiEvaluation?.matched_keywords ?? [];
+const missingSkills = referral.aiEvaluation?.missing_keywords ?? [];
+
+
 
       return (
         <div className="space-y-4">
@@ -652,25 +630,55 @@ export const CandidateDetails = () => {
           </div>
 
           {/* Keyword Insights */}
-          <div className="pt-3 border-t text-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Matched Keywords
-              </span>
-              <span className="font-medium text-green-600">
-                {referral.aiEvaluation.matched_keywords ?? 0}
-              </span>
-            </div>
+         {/* Keyword Insights */}
+<div className="pt-3 border-t space-y-4">
+  {/* Matched Skills */}
+  <div>
+    <p className="text-sm text-muted-foreground mb-2">
+      Matched Skills
+    </p>
 
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Missing Keywords
-              </span>
-              <span className="font-medium text-red-600">
-                {referral.aiEvaluation.missing_keywords ?? 0}
-              </span>
-            </div>
-          </div>
+    {matchedSkills.length > 0 ? (
+      <div className="flex flex-wrap gap-2">
+        {matchedSkills.map((skill, idx) => (
+          <span
+            key={idx}
+            className="px-3 py-1 rounded-full text-xs font-medium
+                       bg-green-100 text-green-700 border border-green-200"
+          >
+            {skill}
+          </span>
+        ))}
+      </div>
+    ) : (
+      <p className="text-xs text-muted-foreground">None</p>
+    )}
+  </div>
+
+  {/* Missing Skills */}
+  <div>
+    <p className="text-sm text-muted-foreground mb-2">
+      Missing Skills
+    </p>
+
+    {missingSkills.length > 0 ? (
+      <div className="flex flex-wrap gap-2">
+        {missingSkills.map((skill, idx) => (
+          <span
+            key={idx}
+            className="px-3 py-1 rounded-full text-xs font-medium
+                       bg-red-100 text-red-700 border border-red-200"
+          >
+            {skill}
+          </span>
+        ))}
+      </div>
+    ) : (
+      <p className="text-xs text-muted-foreground">None 🎉</p>
+    )}
+  </div>
+</div>
+
 
           {/* Meta */}
           {referral.aiEvaluation.evaluatedAt && (
@@ -690,10 +698,6 @@ export const CandidateDetails = () => {
     </div>
   )}
 </motion.div>
-
-
-          {/* Right Column - Actions & Quick Stats */}
-          <div className="space-y-6">
             {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}

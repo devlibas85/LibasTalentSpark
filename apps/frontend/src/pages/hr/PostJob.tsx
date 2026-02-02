@@ -275,7 +275,7 @@ const handleJDUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
                 <option value="founder">FOUNDER OFFICE</option>
                 <option value="catalogue">CATALOGUE</option>
                 <option value="ecommerce">ECOMMERCE </option>
-                <option value="HR">Human Resources</option>
+                <option value="HR">HUMAN RESOURCE</option>
                 <option value="Marketing">MARKETING</option>
                 <option value="Mis">MIS</option>
                 <option value="Retailebo">RETAIL EBO</option>
