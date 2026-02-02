@@ -1,7 +1,7 @@
 import express, { type Request } from "express";
 import { Referral } from "../models/referral.Models.js";
 import { requireAuth } from "../middlewares/requireAuth.middleware.js";
-import { uploadResume } from "../middlewares/uploadResume.middleware.js";
+import { uploadResume } from "../middlewares/upload.middleware.js";
 import { triggerAIAsync } from "../middlewares/aiServices.js";
 
 const router = express.Router();

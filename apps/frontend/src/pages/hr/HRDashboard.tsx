@@ -13,9 +13,9 @@ import {
   BarChart3
 } from "lucide-react";
 
-import { useGetJobsQuery } from "@/store/jobApi";
+import { useGetJobsQuery } from "@/store/api/jobApi";
 import type { Job } from "@/types/job";
-import { useGetAllReferralsQuery } from "@/store/refralApi";
+import { useGetAllReferralsQuery } from "@/store/api/refralApi";
 
 const pipelineStages = ["Applied", "Screening", "Interview", "Offer", "Hired"];
 

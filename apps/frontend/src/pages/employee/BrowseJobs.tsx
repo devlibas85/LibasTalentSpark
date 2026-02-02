@@ -17,8 +17,8 @@ import {
   Calendar,
   ChevronDown,
 } from "lucide-react";
-import { useGetJobsQuery } from "@/store/jobApi";
-import { useSubmitReferralMutation } from "@/store/refralApi";
+import { useGetJobsQuery } from "@/store/api/jobApi";
+import { useSubmitReferralMutation } from "@/store/api/refralApi";
 
 export default function BrowseJobs() {
   const { data: allJobs = [], isLoading, isError } = useGetJobsQuery();

@@ -1,7 +1,7 @@
 import express, { type Request } from "express";
 import { Job } from "../models/jobs.Models.js";
 import { requireAuth } from "../middlewares/requireAuth.middleware.js";
-import { uploadJD } from "../middlewares/uploadJDmiddleware.js";
+import { uploadJD } from "../middlewares/upload.middleware.js";
 const router = express.Router();
 
 router.post(

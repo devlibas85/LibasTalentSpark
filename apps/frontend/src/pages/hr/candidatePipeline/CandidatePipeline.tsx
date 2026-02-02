@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useGetAllReferralsQuery } from "@/store/refralApi";
-import type { Referral, ReferralStatus } from "@/store/refralApi";
+import { useGetAllReferralsQuery } from "@/store/api/refralApi";
+import type { Referral, ReferralStatus } from "@/store/api/refralApi";
 import { useNavigate } from "react-router-dom";
 
 import {

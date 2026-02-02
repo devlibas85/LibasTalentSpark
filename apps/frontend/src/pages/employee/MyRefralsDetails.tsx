@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useGetMyReferralsQuery } from "@/store/refralApi";
-import type { Referral, ReferralStatus } from "@/store/refralApi";
+import { useGetMyReferralsQuery } from "@/store/api/refralApi";
+import type { Referral, ReferralStatus } from "@/store/api/refralApi";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 

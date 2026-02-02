@@ -16,7 +16,7 @@ import {
   Calendar,
   Award,
 } from "lucide-react";
-import { useGetJobsQuery } from "@/store/jobApi";
+import { useGetJobsQuery } from "@/store/api/jobApi";
 import { useNavigate } from "react-router-dom";
 
 // Job Type Interface

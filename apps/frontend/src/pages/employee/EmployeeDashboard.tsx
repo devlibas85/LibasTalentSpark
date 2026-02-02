@@ -19,13 +19,13 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { useGetJobsQuery } from "@/store/jobApi";
+import { useGetJobsQuery } from "@/store/api/jobApi";
 
 
 import {
   useGetMyReferralsQuery,
   useSubmitReferralMutation,
-} from "@/store/refralApi";
+} from "@/store/api/refralApi";
 
 export default function EmployeeDashboard() {
   // Reuse existing jobs query - filter for published jobs only

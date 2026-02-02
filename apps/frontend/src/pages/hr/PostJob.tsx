@@ -26,7 +26,7 @@ import {
 import {
   useCreateJobMutation,
 
-} from "@/store/jobApi";
+} from "@/store/api/jobApi";
 
 interface JobFormData {
   title: string;
