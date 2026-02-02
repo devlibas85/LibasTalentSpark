@@ -1,169 +1,141 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
   Filter,
   UserPlus,
-  CheckCircle,
+  
   XCircle,
   Clock,
   Award,
-  DollarSign,
+  
   Calendar,
   Eye,
-  MessageSquare,
+  
   ThumbsUp,
   ThumbsDown,
+  Phone,
+  Mail,
+  FileText,
 } from "lucide-react";
-
-interface Referral {
-  id: string;
-    job: string; 
-  candidateName: string;
-  candidateEmail: string;
-  candidatePhone: string;
-  position: string;
-  referredBy: string;
-  referrerEmail: string;
-  department: string;
-  status: "pending" | "under_review" | "approved" | "rejected" | "hired";
-  submittedDate: string;
-  reward: string;
-  experience: string;
-  notes: string;
-}
+import { useGetAllReferralsQuery, useUpdateReferralMutation, type Referral } from "../../store/api/refralApi";
 
 export default function ReferralsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [actionRemarks, setActionRemarks] = useState<string>("");
 
-  // Sample data
-  const referrals: Referral[] = [
-    {
-      id: "1",
-      job:"dfsadfsda",
-      candidateName: "Arjun Malhotra",
-      candidateEmail: "arjun.m@email.com",
-      candidatePhone: "+91 98765 43210",
-      position: "Senior React Developer",
-      referredBy: "Rajesh Kumar",
-      referrerEmail: "rajesh.kumar@libas.in",
-      department: "Engineering",
-      status: "pending",
-      submittedDate: "2026-01-27",
-      reward: "₹50,000",
-      experience: "5 years",
-      notes: "Strong frontend skills, worked at top startups",
-    },
-    {
-      id: "2",
-      job:"gefsgefwgv",
-      candidateName: "Pooja Desai",
-      candidateEmail: "pooja.d@email.com",
-      candidatePhone: "+91 98765 43211",
-      position: "Product Designer",
-      referredBy: "Sneha Sharma",
-      referrerEmail: "sneha.sharma@libas.in",
-      department: "Design",
-      status: "under_review",
-      submittedDate: "2026-01-26",
-      reward: "₹40,000",
-      experience: "4 years",
-      notes: "Excellent design portfolio, UI/UX specialist",
-    },
-    {
-      id: "3",
-      job: "fsadfsda ",
-      candidateName: "Karan Singh",
-      candidateEmail: "karan.s@email.com",
-      candidatePhone: "+91 98765 43212",
-      position: "Backend Developer",
-      referredBy: "Amit Patel",
-      referrerEmail: "amit.patel@libas.in",
-      department: "Engineering",
-      status: "approved",
-      submittedDate: "2026-01-24",
-      reward: "₹50,000",
-      experience: "6 years",
-      notes: "Microservices expert, worked on large scale systems",
-    },
-    {
-      id: "4",
-      job: "gfsgsa ",
-      candidateName: "Neha Gupta",
-      candidateEmail: "neha.g@email.com",
-      candidatePhone: "+91 98765 43213",
-      position: "QA Engineer",
-      referredBy: "Priya Reddy",
-      referrerEmail: "priya.reddy@libas.in",
-      department: "Engineering",
-      status: "rejected",
-      submittedDate: "2026-01-23",
-      reward: "₹30,000",
-      experience: "2 years",
-      notes: "Experience not matching requirements",
-    },
-    {
-      id: "5",
-      job: " gsadg s",
-      candidateName: "Rohit Verma",
-      candidateEmail: "rohit.v@email.com",
-      candidatePhone: "+91 98765 43214",
-      position: "Marketing Manager",
-      referredBy: "Vikram Singh",
-      referrerEmail: "vikram.singh@libas.in",
-      department: "Marketing",
-      status: "hired",
-      submittedDate: "2026-01-15",
-      reward: "₹75,000",
-      experience: "8 years",
-      notes: "Successfully hired, excellent cultural fit",
-    },
-  ];
+  // Fetch referrals from API
+  const { data: referrals = [], isLoading, refetch } = useGetAllReferralsQuery();
+  const [updateReferral] = useUpdateReferralMutation();
 
-  const filteredReferrals = referrals.filter((referral) => {
+  // Handle view referral (marks as under_review)
+  const handleViewReferral = async (referralId: string) => {
+    try {
+      if (showDetails === referralId) {
+        setShowDetails(null);
+        return;
+      }
+
+      // Find referral to check current status
+      const referral = referrals.find(r => r._id === referralId);
+      
+      // Only update if status is submitted
+      if (referral?.status === "submitted") {
+        await updateReferral({
+          id: referralId,
+          data: {
+            action: "reviewed",
+            remarks: "Viewed by HR",
+          },
+        }).unwrap();
+      }
+
+      setShowDetails(referralId);
+    } catch (error) {
+      console.error("Failed to update referral:", error);
+    }
+  };
+
+  // Handle status update
+  const handleStatusUpdate = async (referralId: string, action: string, remarks?: string) => {
+    try {
+      await updateReferral({
+        id: referralId,
+        data: {
+          action,
+          remarks: remarks || actionRemarks,
+        },
+      }).unwrap();
+      
+      // Clear remarks
+      setActionRemarks("");
+      
+      // Close modal
+      setShowDetails(null);
+      
+      // Refetch data
+      refetch();
+    } catch (error) {
+      console.error("Failed to update referral status:", error);
+    }
+  };
+
+  // Filter referrals
+  const filteredReferrals:Referral[] = referrals.filter((referral) => {
     const matchesSearch =
       referral.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.referredBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      referral.position.toLowerCase().includes(searchQuery.toLowerCase());
+      referral.referredBy.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      referral.job.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       filterStatus === "all" || referral.status === filterStatus;
+    
+    // If you have department in job, filter by it
+    const job = referral.job as any;
     const matchesDepartment =
-      filterDepartment === "all" || referral.department === filterDepartment;
+      filterDepartment === "all" || (job.department && job.department === filterDepartment);
+    
     return matchesSearch && matchesStatus && matchesDepartment;
   });
 
   const getStatusConfig = (status: string) => {
     switch (status) {
-      case "pending":
+      case "submitted":
         return {
+          label: "Submitted",
           color: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
           icon: Clock,
         };
       case "under_review":
         return {
+          label: "Under Review",
           color: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
           icon: Eye,
         };
-      case "approved":
+      case "interview_scheduled":
         return {
-          color: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-          icon: CheckCircle,
+          label: "Interview Scheduled",
+          color: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+          icon: Calendar,
         };
       case "rejected":
         return {
+          label: "Rejected",
           color: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
           icon: XCircle,
         };
       case "hired":
         return {
+          label: "Hired",
           color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
           icon: Award,
         };
       default:
         return {
+          label: status,
           color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
           icon: Clock,
         };
@@ -178,16 +150,16 @@ export default function ReferralsManagement() {
       color: "text-blue-600",
     },
     {
-      label: "Pending Review",
-      value: referrals.filter((r) => r.status === "pending").length,
+      label: "Submitted",
+      value: referrals.filter((r) => r.status === "submitted").length,
       icon: Clock,
       color: "text-yellow-600",
     },
     {
-      label: "Approved",
-      value: referrals.filter((r) => r.status === "approved").length,
-      icon: CheckCircle,
-      color: "text-green-600",
+      label: "Under Review",
+      value: referrals.filter((r) => r.status === "under_review").length,
+      icon: Eye,
+      color: "text-blue-600",
     },
     {
       label: "Hired",
@@ -196,6 +168,17 @@ export default function ReferralsManagement() {
       color: "text-emerald-600",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading referrals...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -252,9 +235,9 @@ export default function ReferralsManagement() {
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all appearance-none"
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
+              <option value="submitted">Submitted</option>
               <option value="under_review">Under Review</option>
-              <option value="approved">Approved</option>
+              <option value="interview_scheduled">Interview Scheduled</option>
               <option value="rejected">Rejected</option>
               <option value="hired">Hired</option>
             </select>
@@ -272,6 +255,8 @@ export default function ReferralsManagement() {
               <option value="Design">Design</option>
               <option value="Marketing">Marketing</option>
               <option value="Sales">Sales</option>
+              <option value="HR">HR</option>
+              <option value="Operations">Operations</option>
             </select>
           </div>
         </div>
@@ -296,9 +281,6 @@ export default function ReferralsManagement() {
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium">
-                  Reward
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
                   Submitted
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-medium">
@@ -308,10 +290,11 @@ export default function ReferralsManagement() {
             </thead>
             <tbody className="divide-y">
               {filteredReferrals.map((referral) => {
-                const StatusIcon = getStatusConfig(referral.status).icon;
+                const statusConfig = getStatusConfig(referral.status);
+                const StatusIcon = statusConfig.icon;
                 return (
                   <motion.tr
-                    key={referral.id}
+                    key={referral._id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="hover:bg-muted/30 transition-colors"
@@ -328,79 +311,93 @@ export default function ReferralsManagement() {
                     </td>
                     <td className="px-4 py-4">
                       <div>
-                        <p className="text-sm font-medium">{referral.position}</p>
+                        <p className="text-sm font-medium">{referral.job.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {referral.department}
+                          {(referral.job as any).location}
                         </p>
                       </div>
                     </td>
                     <td className="px-4 py-4">
                       <div>
                         <p className="text-sm font-medium">
-                          {referral.referredBy}
+                          {referral.referredBy.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {referral.referrerEmail}
+                          {referral.referredBy.email}
                         </p>
                       </div>
                     </td>
                     <td className="px-4 py-4">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          getStatusConfig(referral.status).color
-                        }`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
                       >
                         <StatusIcon size={12} />
-                        {referral.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className="text-sm font-medium flex items-center gap-1">
-                        <DollarSign size={14} className="text-green-600" />
-                        {referral.reward}
+                        {statusConfig.label}
                       </span>
                     </td>
                     <td className="px-4 py-4">
                       <span className="text-sm flex items-center gap-1">
                         <Calendar size={14} className="text-muted-foreground" />
-                        {new Date(referral.submittedDate).toLocaleDateString()}
+                        {new Date(referral.createdAt).toLocaleDateString()}
                       </span>
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        {referral.status === "pending" && (
+                        <button
+                          onClick={() => handleViewReferral(referral._id)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            referral.status === "submitted" 
+                              ? "hover:bg-blue-50 dark:hover:bg-blue-950/20 text-blue-600"
+                              : "hover:bg-muted"
+                          }`}
+                          title={referral.status === "submitted" ? "View & Start Review" : "View Details"}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        
+                        {referral.status === "submitted" || referral.status === "under_review" ? (
                           <>
                             <button
-                              className="p-1.5 hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 rounded-lg transition-colors"
-                              title="Approve"
+                              onClick={() => handleStatusUpdate(referral._id, "interview_scheduled")}
+                              className="p-1.5 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-purple-600 rounded-lg transition-colors"
+                              title="Schedule Interview"
                             >
-                              <ThumbsUp size={16} />
+                              <Calendar size={16} />
                             </button>
                             <button
+                              onClick={() => handleStatusUpdate(referral._id, "rejected")}
                               className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 rounded-lg transition-colors"
                               title="Reject"
                             >
                               <ThumbsDown size={16} />
                             </button>
                           </>
-                        )}
-                        <button
-                          onClick={() =>
-                            setShowDetails(
-                              showDetails === referral.id ? null : referral.id
-                            )
-                          }
+                        ) : referral.status === "interview_scheduled" ? (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "hired")}
+                              className="p-1.5 hover:bg-green-50 dark:hover:bg-green-950/20 text-green-600 rounded-lg transition-colors"
+                              title="Mark as Hired"
+                            >
+                              <ThumbsUp size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "rejected")}
+                              className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-red-600 rounded-lg transition-colors"
+                              title="Reject"
+                            >
+                              <ThumbsDown size={16} />
+                            </button>
+                          </>
+                        ) : null}
+                        
+                        <a
+                          href={`mailto:${referral.candidateEmail}`}
                           className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                          title="View Details"
+                          title="Email Candidate"
                         >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          className="p-1.5 hover:bg-muted rounded-lg transition-colors"
-                          title="Message"
-                        >
-                          <MessageSquare size={16} />
-                        </button>
+                          <Mail size={16} />
+                        </a>
                       </div>
                     </td>
                   </motion.tr>
@@ -443,82 +440,214 @@ export default function ReferralsManagement() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-card border rounded-xl p-6 max-w-2xl w-full"
+            className="bg-card border rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {(() => {
-              const referral = referrals.find((r) => r.id === showDetails);
+              const referral = referrals.find((r) => r._id === showDetails);
               if (!referral) return null;
 
+              const job = referral.job as any;
+              const aiEvaluation = referral.aiEvaluation;
+              const statusConfig = getStatusConfig(referral.status);
+
               return (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-start justify-between">
                     <div>
                       <h2 className="text-xl font-semibold">
                         {referral.candidateName}
                       </h2>
-                      <p className="text-muted-foreground">{referral.position}</p>
+                      <p className="text-muted-foreground">{job.title}</p>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium mt-2 ${statusConfig.color}`}>
+                        <statusConfig.icon size={12} />
+                        {statusConfig.label}
+                      </span>
                     </div>
                     <button
                       onClick={() => setShowDetails(null)}
-                      className="p-2 hover:bg-muted rounded-lg"
+                      className="p-2 hover:bg-muted rounded-lg text-xl"
                     >
                       ×
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Email</p>
-                      <p className="text-sm font-medium">
-                        {referral.candidateEmail}
-                      </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Candidate Details */}
+                    <div className="space-y-4">
+                      <h3 className="font-medium text-lg">Candidate Details</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Email</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{referral.candidateEmail}</p>
+                            <a href={`mailto:${referral.candidateEmail}`} className="text-primary hover:underline">
+                              <Mail size={14} />
+                            </a>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Phone</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{referral.candidatePhone}</p>
+                            <a href={`tel:${referral.candidatePhone}`} className="text-primary hover:underline">
+                              <Phone size={14} />
+                            </a>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Relationship</p>
+                          <p className="text-sm font-medium capitalize">{referral.relationship}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Resume</p>
+                          <a 
+                            href={referral.resume} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline text-sm"
+                          >
+                            <FileText size={14} />
+                            View Resume
+                          </a>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Notes</p>
+                        <p className="text-sm bg-muted p-3 rounded-lg">{referral.notes || "No notes provided"}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Phone</p>
-                      <p className="text-sm font-medium">
-                        {referral.candidatePhone}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Experience
-                      </p>
-                      <p className="text-sm font-medium">{referral.experience}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">
-                        Department
-                      </p>
-                      <p className="text-sm font-medium">{referral.department}</p>
+
+                    {/* Job & Referrer Details */}
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="font-medium text-lg mb-2">Job Details</h3>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="font-medium">{job.title}</p>
+                          <p className="text-sm text-muted-foreground">{job.location}</p>
+                          {job.department && (
+                            <p className="text-sm text-muted-foreground">{job.department}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="font-medium text-lg mb-2">Referred By</h3>
+                        <div className="bg-muted p-3 rounded-lg">
+                          <p className="font-medium">{referral.referredBy.name}</p>
+                          <p className="text-sm text-muted-foreground">{referral.referredBy.email}</p>
+                        </div>
+                      </div>
+
+                      {/* AI Evaluation */}
+                      {aiEvaluation && (
+                        <div>
+                          <h3 className="font-medium text-lg mb-2">AI Evaluation</h3>
+                          <div className="bg-muted p-3 rounded-lg space-y-2">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground">Match Score</p>
+                                <p className="font-medium">{aiEvaluation.keyword_score || 0}/100</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground">Experience Match</p>
+                                <p className="font-medium">{aiEvaluation.exp_score || 0}%</p>
+                              </div>
+                            </div>
+                            {aiEvaluation.matched_keywords && aiEvaluation.matched_keywords.length > 0 && (
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-1">Matched Keywords</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {aiEvaluation.matched_keywords.map((keyword, idx) => (
+                                    <span key={idx} className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded">
+                                      {keyword}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Referred By
-                    </p>
-                    <p className="text-sm font-medium">{referral.referredBy}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {referral.referrerEmail}
-                    </p>
-                  </div>
-
-                  <div className="border-t pt-4">
-                    <p className="text-sm text-muted-foreground mb-2">Notes</p>
-                    <p className="text-sm">{referral.notes}</p>
-                  </div>
-
-                  {referral.status === "pending" && (
-                    <div className="flex gap-3 pt-4">
-                      <button className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                        Approve Referral
-                      </button>
-                      <button className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        Reject Referral
-                      </button>
+                  {/* Action History */}
+                  {referral.actionHistory && referral.actionHistory.length > 0 && (
+                    <div>
+                      <h3 className="font-medium text-lg mb-2">Action History</h3>
+                      <div className="space-y-2">
+                        {referral.actionHistory.map((action, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-sm border-b pb-2">
+                            <span className="capitalize">{action.action}</span>
+                            <span className="text-muted-foreground">
+                              {new Date(action.actionAt).toLocaleString()}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="border-t pt-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Remarks
+                        </label>
+                        <textarea
+                          value={actionRemarks}
+                          onChange={(e) => setActionRemarks(e.target.value)}
+                          rows={3}
+                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                          placeholder="Add remarks for this action..."
+                        />
+                      </div>
+
+                      <div className="flex gap-3">
+                        {referral.status === "submitted" || referral.status === "under_review" ? (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "interview_scheduled")}
+                              className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                            >
+                              Schedule Interview
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "rejected")}
+                              className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        ) : referral.status === "interview_scheduled" ? (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "hired")}
+                              className="flex-1 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                            >
+                              Mark as Hired
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(referral._id, "rejected")}
+                              className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                              Reject After Interview
+                            </button>
+                          </>
+                        ) : null}
+                        
+                        <button
+                          onClick={() => setShowDetails(null)}
+                          className="flex-1 px-4 py-2.5 border rounded-lg hover:bg-muted transition-colors"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })()}

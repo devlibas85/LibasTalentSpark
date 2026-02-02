@@ -15,7 +15,7 @@ const referralActionSchema = new Schema(
     },
     actionBy: {
       type: Types.ObjectId,
-      ref: "User", // HR / Recruiter
+      ref: "User", 
     },
     actionAt: {
       type: Date,
