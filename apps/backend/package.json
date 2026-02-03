@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "serve:local": "cross-env NODE_ENV=production node dist/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -33,6 +34,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-azure-ad": "^4.3.6",
     "@types/pdf-parse": "^1.1.5",
+    "cross-env": "^10.1.0",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

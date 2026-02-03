@@ -24,6 +24,7 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET!,
   frontendUrl: process.env.FRONTEND_URL!,
    mongoUri: process.env.MONGO_URI!,
+   backedUrl:process.env.BACKEND_URL!,
 };
 
 // Validate required vars

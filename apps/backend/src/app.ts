@@ -13,9 +13,26 @@ import profileRouter from "./modules/routes/profile.routes.js"
 export const app = express();
 
 // ===== CORS =====
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://172.16.21.214:4173",
+ " https://libas-talent-spark.vercel.app/",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      // allow server-to-server / curl / postman
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.error("❌ Blocked by CORS:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
