@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useGetAllReferralsQuery, } from "@/store/api/refralApi";
+import { useGetAllReferralsQuery, useUpdateReferralMutation } from "@/store/api/refralApi";
 import type { Referral, ReferralStatus } from "@/store/api/refralApi";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -21,7 +22,6 @@ import {
   Edit,
   Trash2,
   Share2,
-  Star,
   Users,
   History,
   type LucideIcon,
@@ -91,11 +91,58 @@ export const CandidateDetails = () => {
   const [activeTab, setActiveTab] = useState<
     "overview" | "timeline" | "notes"
   >("overview");
+  const [actionRemarks, setActionRemarks] = useState("");
 
-  const { data: referrals = [], isLoading, isError } =
+  const { data: referrals = [], isLoading, isError, refetch } =
     useGetAllReferralsQuery();
+  const [updateReferral] = useUpdateReferralMutation();
 
   const referral = referrals.find((r: Referral) => r._id === id);
+
+  // Handle status update
+  const handleStatusUpdate = async (action: string, remarks?: string) => {
+    if (!id) {
+      toast.error("Invalid candidate ID");
+      return;
+    }
+    try {
+      await updateReferral({
+        id,
+        data: {
+          action,
+          remarks: remarks || actionRemarks,
+        },
+      }).unwrap();
+      toast.success("Referral updated successfully");
+      setActionRemarks("");
+      refetch();
+    } catch {
+      toast.error("Failed to update referral status");
+    }
+  };
+
+  // Handle reject
+  const handleReject = async () => {
+    await handleStatusUpdate("rejected", actionRemarks);
+  };
+
+  // Handle schedule interview
+  const handleScheduleInterview = async () => {
+    await handleStatusUpdate("interview_scheduled", actionRemarks);
+  };
+
+  // Handle hire
+  const handleHire = async () => {
+    await handleStatusUpdate("hired", actionRemarks);
+  };
+
+  // Handle send email
+  const handleSendEmail = () => {
+    if (referral?.candidateEmail) {
+      window.location.href = `mailto:${referral.candidateEmail}`;
+      toast.success("Opening email client...");
+    }
+  };
 
   
 
@@ -706,72 +753,92 @@ const missingSkills = referral.aiEvaluation?.missing_keywords ?? [];
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 font-medium">
-                  <MessageSquare size={18} />
-                  Schedule Interview
-                </button>
-                <button className="w-full px-4 py-3 border rounded-xl hover:bg-muted transition-colors flex items-center justify-center gap-2 font-medium">
+              <div className="space-y-3 mb-4">
+                {referral?.status === "submitted" || referral?.status === "under_review" ? (
+                  <>
+                    <button 
+                      onClick={handleScheduleInterview}
+                      className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                    >
+                      <Calendar size={18} />
+                      Schedule Interview
+                    </button>
+                    <button 
+                      onClick={handleReject}
+                      className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                    >
+                      <Trash2 size={18} />
+                      Reject Candidate
+                    </button>
+                  </>
+                ) : referral?.status === "interview_scheduled" ? (
+                  <>
+                    <button 
+                      onClick={handleHire}
+                      className="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                    >
+                      <CheckCircle2 size={18} />
+                      Mark as Hired
+                    </button>
+                    <button 
+                      onClick={handleReject}
+                      className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                    >
+                      <Trash2 size={18} />
+                      Reject After Interview
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center text-muted-foreground text-sm py-4">
+                    No actions available for this status
+                  </div>
+                )}
+                <button 
+                  onClick={handleSendEmail}
+                  className="w-full px-4 py-3 border rounded-xl hover:bg-muted transition-colors flex items-center justify-center gap-2 font-medium"
+                >
                   <Mail size={18} />
                   Send Email
                 </button>
-                <button className="w-full px-4 py-3 border rounded-xl hover:bg-muted transition-colors flex items-center justify-center gap-2 font-medium">
-                  <Star size={18} />
-                  Add to Favorites
-                </button>
-                <button className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 font-medium">
-                  <Trash2 size={18} />
-                  Reject Candidate
-                </button>
+              </div>
+
+              {/* Remarks Section */}
+              <div className="border-t pt-4">
+                <label className="block text-sm font-medium mb-2">
+                  Add Remarks
+                </label>
+                <textarea
+                  value={actionRemarks}
+                  onChange={(e) => setActionRemarks(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
+                  placeholder="Add notes or remarks..."
+                />
               </div>
             </motion.div>
 
-            {/* Status Update */}
+            {/* Status Badge */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
               className="bg-card border rounded-2xl p-6"
             >
-              <h3 className="font-semibold mb-4">Update Status</h3>
-              <div className="space-y-2">
-                {(Object.entries(statusConfig) as Array<[ReferralStatus, typeof statusConfig[ReferralStatus]]>).map(([key, config]) => {
+              <h3 className="font-semibold mb-4">Current Status</h3>
+              <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border">
+                {referral && (() => {
+                  const config = statusConfig[referral.status];
                   const Icon = config.icon;
                   return (
-                    <button
-                      key={key}
-                      className={`w-full px-4 py-3 rounded-xl transition-all flex items-center gap-3 ${
-                        referral.status === key
-                          ? config.bg + " border"
-                          : "border hover:bg-muted"
-                      }`}
-                    >
-                      <Icon
-                        size={18}
-                        className={
-                          referral.status === key
-                            ? config.color
-                            : "text-muted-foreground"
-                        }
-                      />
-                      <span
-                        className={`font-medium ${
-                          referral.status === key
-                            ? config.color
-                            : "text-foreground"
-                        }`}
-                      >
-                        {config.label}
-                      </span>
-                      {referral.status === key && (
-                        <CheckCircle2
-                          size={16}
-                          className={`ml-auto ${config.color}`}
-                        />
-                      )}
-                    </button>
+                    <>
+                      <Icon size={24} className={config.color} />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Status</p>
+                        <p className={`font-semibold ${config.color}`}>{config.label}</p>
+                      </div>
+                    </>
                   );
-                })}
+                })()}
               </div>
             </motion.div>
 

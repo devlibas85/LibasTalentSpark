@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -20,6 +21,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useGetAllReferralsQuery, useUpdateReferralMutation, type Referral } from "../../store/api/refralApi";
+import { toast } from "sonner";
 
 export default function ReferralsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,11 +54,12 @@ export default function ReferralsManagement() {
             remarks: "Viewed by HR",
           },
         }).unwrap();
+        toast.success("Referral marked under review");
       }
 
       setShowDetails(referralId);
     } catch (error) {
-      console.error("Failed to update referral:", error);
+      toast.error("Failed to mark referral under review");
     }
   };
 
@@ -70,6 +73,7 @@ export default function ReferralsManagement() {
           remarks: remarks || actionRemarks,
         },
       }).unwrap();
+      toast.success("Referral updated");
       
       // Clear remarks
       setActionRemarks("");
@@ -80,7 +84,7 @@ export default function ReferralsManagement() {
       // Refetch data
       refetch();
     } catch (error) {
-      console.error("Failed to update referral status:", error);
+      toast.error("Failed to update referral status");
     }
   };
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,15 +92,20 @@ export default function HRDashboard() {
       return acc;
     }, {});
 
-    // Count referrals by status
+    // Map backend referral statuses to pipeline stages
+    const statusToStage: Record<string, string> = {
+      submitted: "Applied",
+      under_review: "Screening",
+      interview_scheduled: "Interview",
+      offer_made: "Offer",
+      hired: "Hired",
+    };
+
+    // Count referrals by mapped stage
     referrals.forEach((ref) => {
-      const status = ref.status || "Applied"; // Default to "Applied" if no status
-      if (pipelineStages.includes(status)) {
-        counts[status]++;
-      } else {
-        // If status doesn't match any stage, add to "Applied" as default
-        counts["Applied"]++;
-      }
+      const raw = (ref.status || "").toString();
+      const stage = statusToStage[raw] || (pipelineStages.includes(raw) ? raw : "Applied");
+      counts[stage] = (counts[stage] || 0) + 1;
     });
 
     return counts;
@@ -109,6 +115,27 @@ export default function HRDashboard() {
   const totalCandidates = useMemo(() => {
     return Object.values(pipelineCounts).reduce((sum, count) => sum + count, 0);
   }, [pipelineCounts]);
+
+  // Upcoming interviews derived from referrals with status 'interview_scheduled'
+  const upcomingInterviews = useMemo(() => {
+    return referrals
+      .filter((r) => r.status === "interview_scheduled")
+      .map((r) => {
+        // try to find a timestamp from actionHistory
+        const history = (r.actionHistory || []).slice().reverse();
+        const interviewAction = history.find((h: any) =>
+          (h.action || "").toLowerCase().includes("interview")
+        );
+        const timeRaw = interviewAction?.actionAt || r.createdAt || "";
+        const time = timeRaw ? new Date(timeRaw).toLocaleString("en-IN", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Scheduled";
+        return {
+          id: r._id,
+          name: r.candidateName,
+          role: (r.job && (r.job as any).title) || "Candidate",
+          time,
+        };
+      });
+  }, [referrals]);
 
   // Stats with icons and colors
   const stats = [
@@ -446,35 +473,35 @@ export default function HRDashboard() {
             <Calendar className="text-blue-500" size={20} />
           </div>
           <ul className="space-y-4">
-            {[
-              { name: "Ankit Sharma", role: "React Developer", time: "Today 11:00 AM", color: "bg-primary/10 text-primary" },
-              { name: "Neha Verma", role: "QA Engineer", time: "Tomorrow 2:30 PM", color: "bg-blue-500/10 text-blue-500" },
-              { name: "Rajesh Kumar", role: "Backend Developer", time: "Tomorrow 4:00 PM", color: "bg-emerald-500/10 text-emerald-500" },
-            ].map((interview, index) => (
-              <motion.li
-                key={interview.name}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + (index * 0.1) }}
-                whileHover={{ x: 4 }}
-                className="p-3 rounded-xl hover:bg-accent/50 transition-colors duration-200"
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-lg ${interview.color}`}>
-                    <Users size={16} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium">{interview.name}</p>
-                    <p className="text-sm text-muted-foreground">{interview.role}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Clock size={12} className="text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">{interview.time}</p>
+            {upcomingInterviews.length === 0 ? (
+              <li className="p-3 rounded-xl text-sm text-muted-foreground">No upcoming interviews</li>
+            ) : (
+              upcomingInterviews.map((interview, index) => (
+                <motion.li
+                  key={interview.id}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + (index * 0.06) }}
+                  whileHover={{ x: 4 }}
+                  className="p-3 rounded-xl hover:bg-accent/50 transition-colors duration-200"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg bg-primary/10 text-primary`}>
+                      <Users size={16} />
                     </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{interview.name}</p>
+                      <p className="text-sm text-muted-foreground">{interview.role}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock size={12} className="text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">{interview.time}</p>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-muted-foreground mt-1" />
                   </div>
-                  <ArrowRight size={16} className="text-muted-foreground mt-1" />
-                </div>
-              </motion.li>
-            ))}
+                </motion.li>
+              ))
+            )}
           </ul>
         </motion.div>
       </div>

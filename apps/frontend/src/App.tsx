@@ -35,10 +35,10 @@ import EditJob from "./pages/hr/jobs/editJob";
 
 function App() {
   const role = useSelector((state: RootState) => state.auth.role);
-  console.log("🧠 ROLE FROM REDUX IN APP:", role);
+  console.debug("🧠 ROLE FROM REDUX IN APP:", role);
 
   useEffect(() => {
-    getHealth().then(console.log);
+    getHealth().then((res) => console.debug("health:", res));
   }, []);
 
   return (

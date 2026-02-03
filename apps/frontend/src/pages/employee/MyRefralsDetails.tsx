@@ -4,6 +4,7 @@ import { useGetMyReferralsQuery } from "@/store/api/refralApi";
 import type { Referral, ReferralStatus } from "@/store/api/refralApi";
 import { motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   ArrowLeft,
@@ -659,7 +660,7 @@ export const MyReferralDetails = () => {
               <button
                 onClick={() => {
                   // Handle withdrawal logic
-                  alert("Withdrawal request submitted!");
+                  toast.success("Withdrawal request submitted!");
                   setShowWithdrawModal(false);
                 }}
                 className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"

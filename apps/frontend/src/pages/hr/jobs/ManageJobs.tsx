@@ -1,4 +1,5 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -15,6 +16,7 @@ import {
   Calendar,
   Award,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   useGetJobsQuery,
   useToggleJobStatusMutation,
@@ -57,6 +59,7 @@ export default function ManageJobs() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDepartment, setFilterDepartment] = useState("all");
+  const [filterFreshness, setFilterFreshness] = useState("all");
   const [filterJobType, setFilterJobType] = useState("all");
   const [filterExperienceLevel, setFilterExperienceLevel] = useState("all");
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
@@ -98,33 +101,53 @@ export default function ManageJobs() {
      FILTERED JOBS
      =============================== */
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const matchesSearch =
+        job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.location.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === "all" || uiStatus(job.status) === filterStatus;
+      const matchesStatus =
+        filterStatus === "all" || uiStatus(job.status) === filterStatus;
 
-    const matchesDepartment =
-      filterDepartment === "all" || job.department === filterDepartment;
+      const matchesDepartment =
+        filterDepartment === "all" || job.department === filterDepartment;
 
-    const matchesJobType =
-      filterJobType === "all" || job.jobType === filterJobType;
+      const matchesJobType =
+        filterJobType === "all" || job.jobType === filterJobType;
 
-    const matchesExperience =
-      filterExperienceLevel === "all" ||
-      job.experienceLevel === filterExperienceLevel;
+      const matchesExperience =
+        filterExperienceLevel === "all" ||
+        job.experienceLevel === filterExperienceLevel;
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesDepartment &&
-      matchesJobType &&
-      matchesExperience
-    );
-  });
+      // Freshness filter: compare job createdAt with reference date
+      let matchesFreshness = true;
+      if (filterFreshness !== "all" && job.createdAt) {
+        const created = new Date(job.createdAt);
+        const now = new Date();
+        const diffMs = now.getTime() - created.getTime();
+        const msInDay = 24 * 60 * 60 * 1000;
+        
+        if (filterFreshness === "24h") {
+          matchesFreshness = diffMs <= msInDay;
+        } else if (filterFreshness === "7d") {
+          matchesFreshness = diffMs <= 7 * msInDay;
+        } else if (filterFreshness === "30d") {
+          matchesFreshness = diffMs <= 30 * msInDay;
+        }
+      }
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesDepartment &&
+        matchesJobType &&
+        matchesExperience &&
+        matchesFreshness
+      );
+    });
+  }, [jobs, searchQuery, filterStatus, filterDepartment, filterJobType, filterExperienceLevel, filterFreshness]);
 
   const totalPages = Math.max(
     1,
@@ -175,27 +198,25 @@ export default function ManageJobs() {
 
     try {
       await deleteJob(jobId).unwrap();
-      // Optional: Show success toast
+      toast.success("Job deleted");
     } catch (error) {
-      console.error("Failed to delete job:", error);
-      // Optional: Show error toast
+      toast.error("Failed to delete job");
     }
     setShowMenu(null);
   };
 
   const handleDuplicateJob = (jobId: string) => {
     // TODO: Implement duplicate functionality
-    console.log("Duplicate job:", jobId);
+    console.debug("Duplicate job:", jobId);
     setShowMenu(null);
   };
 
   const handleToggleStatus = async (jobId: string) => {
     try {
       await toggleStatus(jobId).unwrap();
-      // Optional: Show success toast
+      toast.success("Job status updated");
     } catch (error) {
-      console.error("Failed to toggle status:", error);
-      // Optional: Show error toast
+      toast.error("Failed to update job status");
     }
     setShowMenu(null);
   };
@@ -382,12 +403,28 @@ export default function ManageJobs() {
             <option value="Executive">Executive</option>
           </select>
 
-          {/* Clear Filters */}
+          {/* Freshness Filter */}
+          <div className="flex items-center">
+            <label className="text-sm mr-3 text-muted-foreground">Freshness</label>
+            <select
+              value={filterFreshness}
+              onChange={(e) => setFilterFreshness(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            >
+              <option value="all">All</option>
+              <option value="24h">Last 24h</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+            </select>
+          </div>
+
+          {/* Clear Filters - FIXED: Added filterFreshness to the condition */}
           {(searchQuery ||
             filterStatus !== "all" ||
             filterDepartment !== "all" ||
             filterJobType !== "all" ||
-            filterExperienceLevel !== "all") && (
+            filterExperienceLevel !== "all" ||
+            filterFreshness !== "all") && (
             <button
               onClick={() => {
                 setSearchQuery("");
@@ -395,6 +432,7 @@ export default function ManageJobs() {
                 setFilterDepartment("all");
                 setFilterJobType("all");
                 setFilterExperienceLevel("all");
+                setFilterFreshness("all"); // FIXED: Added this line
               }}
               className="px-4 py-2.5 border rounded-lg hover:bg-muted transition-colors lg:col-span-3"
             >
@@ -450,7 +488,8 @@ export default function ManageJobs() {
               ) : (
                 paginatedJobs.map((job) => {
                   const isActive = job.status === "published";
-
+                  const createdTime = job.createdAt ? new Date(job.createdAt).getTime() : 0;
+                  const isNew = createdTime > 0 && new Date().getTime() - createdTime <= 24 * 60 * 60 * 1000;
                   return (
                     <motion.tr
                       key={job._id}
@@ -470,10 +509,15 @@ export default function ManageJobs() {
                       <td className="p-3">
                         <div>
                           <p className="font-medium">{job.title}</p>
-                          <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Briefcase className="h-3 w-3" />
                             {job.jobType}
-                          </span>
+                              </span>
+                              {isNew && (
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">New</span>
+                              )}
+                            </div>
                         </div>
                       </td>
 

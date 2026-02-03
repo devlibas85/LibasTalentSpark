@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import type { NavigateFunction } from "react-router-dom";
 import type { RootState } from "@/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch } from "react-redux";
@@ -48,13 +49,21 @@ interface MenuItem {
 
 interface LibasSidebarProps {
   defaultCollapsed?: boolean;
-  onNavigate?: (path: string) => void;
+  // optional override props (fall back to redux values when not provided)
+  role?: Role;
+  userName?: string;
+  userEmail?: string;
+  // accept either a simple (path:string)=>void or react-router's NavigateFunction
+  onNavigate?: ((path: string) => void) | NavigateFunction;
 }
 
 
 export const LibasSidebar = ({
   defaultCollapsed = false,
   onNavigate,
+  role: propRole,
+  userName,
+  userEmail,
 }: LibasSidebarProps) => {
 
 const dispatch = useDispatch();
@@ -67,9 +76,14 @@ const dispatch = useDispatch();
 
 
 
-const { role, name, email } = useSelector(
-  (state: RootState) => state.auth
-);
+  const auth = useSelector((state: RootState) => state.auth);
+  const roleFromStore = auth.role as Role | undefined;
+  const nameFromStore = auth.name;
+  const emailFromStore = auth.email;
+
+  const currentRole: Role = (propRole ?? roleFromStore ?? "employee") as Role;
+  const displayName = userName ?? nameFromStore ?? "User";
+  const displayEmail = userEmail ?? emailFromStore ?? "user@libas.in";
 
 
   // Detect mobile view
@@ -163,8 +177,8 @@ const { role, name, email } = useSelector(
   ];
 
   const filteredNavItems = navigationItems.filter((item) =>
-  item.roles.includes(role as Role)
-);
+    item.roles.includes(currentRole as Role)
+  );
 
 
   const toggleSidebar = () => {
@@ -244,7 +258,7 @@ const { role, name, email } = useSelector(
                       Libas TalentSpark
                     </span>
                     <span className="text-xs text-muted-foreground capitalize">
-                      {role} Portal
+                      {currentRole} Portal
                     </span>
                   </div>
                 </motion.div>
@@ -372,7 +386,7 @@ const { role, name, email } = useSelector(
               </button>
 
               {/* User info */}
-              {(!collapsed || isMobileView) && (
+                    {(!collapsed || isMobileView) && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -383,18 +397,18 @@ const { role, name, email } = useSelector(
                 >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <span className="text-sm font-semibold text-primary uppercase">
-                     {name?.charAt(0) ?? "U"}
+                     {displayName?.charAt(0) ?? "U"}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
-                     {name ?? "User"}
+                     {displayName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                       {email ?? "user@libas.in"}
+                       {displayEmail}
                     </p>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary mt-1">
-   {role?.toUpperCase()}
+   {currentRole?.toUpperCase()}
                     </span>
                   </div>
                 </motion.div>

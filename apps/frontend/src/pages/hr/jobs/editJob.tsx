@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetJobByIdQuery, useUpdateJobMutation } from "@/store/api/jobApi";
 import { useState, useCallback, useMemo } from "react";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { DEPARTMENTS } from "../../../types/constants/DEPARTMENTS";
 
@@ -123,10 +125,10 @@ export default function EditJob() {
 
     try {
       await updateJob({ id: jobId!, data: formDataToSend }).unwrap();
+      toast.success("Job updated successfully");
       navigate("/jobs/manage");
     } catch (error) {
-      console.error("Failed to update job:", error);
-      alert("Failed to update job. Please try again.");
+      toast.error("Failed to update job. Please try again.");
     }
   };
 

@@ -92,7 +92,7 @@ export default function Profile() {
     const formData = new FormData();
     formData.append('avatar', file);
     // You can implement avatar upload here
-    console.log('Uploading avatar:', file.name);
+    console.debug('Uploading avatar:', file.name);
   };
 
   const getInitials = () => {
