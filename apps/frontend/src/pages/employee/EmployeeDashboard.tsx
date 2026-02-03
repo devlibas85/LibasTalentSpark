@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
@@ -91,17 +92,39 @@ export default function EmployeeDashboard() {
 
   const handleReferralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      await submitReferral({
+        candidateName: referralData.candidateName,
+        candidateEmail: referralData.candidateEmail,
+        candidatePhone: referralData.candidatePhone,
+        relationship: referralData.relationship,
+        notes: referralData.notes,
+        jobId: selectedJob || "",
+        resumeFile: referralData.resumeFile,
+      }).unwrap();
 
-    await submitReferral({
-      candidateName: referralData.candidateName,
-      candidateEmail: referralData.candidateEmail,
-      candidatePhone: referralData.candidatePhone,
-      relationship: referralData.relationship,
-      notes: referralData.notes,
-      jobId: selectedJob || "",
-      resumeFile: referralData.resumeFile,
-    });
+      toast.success("Referral submitted");
+      setShowReferralForm(false);
+      setReferralData({
+        candidateName: "",
+        candidateEmail: "",
+        candidatePhone: "",
+        relationship: "",
+        resumeFile: null,
+        notes: "",
+      });
+    } catch (err) {
+     
+      console.error("Referral submit error:", err);
+      toast.error("Failed to submit referral. Please try again.");
+    }
   };
+
+    useEffect(() => {
+      if (jobsError || referralsError) {
+        toast.error("Failed to load dashboard. Please try again.");
+      }
+    }, [jobsError, referralsError]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGetMyReferralsQuery } from "@/store/api/refralApi";
 import type { Referral, ReferralStatus } from "@/store/api/refralApi";
 import { motion } from "framer-motion";
@@ -88,6 +88,16 @@ export const MyReferralDetails = () => {
   const { data: referrals = [], isLoading, isError } = useGetMyReferralsQuery();
 
   const referral = referrals.find((r: Referral) => r._id === id);
+
+  useEffect(() => {
+    if (isError) {
+      toast.error("Failed to load referral details. Please try again.");
+    }
+
+    if (!isLoading && !isError && !referral) {
+      toast.error("Referral not found.");
+    }
+  }, [isError, isLoading, referral]);
 
   if (isLoading) {
     return (

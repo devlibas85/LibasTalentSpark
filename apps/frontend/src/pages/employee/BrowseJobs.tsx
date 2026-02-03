@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -129,24 +130,32 @@ export default function BrowseJobs() {
 
   const handleReferralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitReferral({
-      candidateName: referralData.candidateName,
-      candidateEmail: referralData.candidateEmail,
-      candidatePhone: referralData.candidatePhone,
-      relationship: referralData.relationship,
-      notes: referralData.notes,
-      jobId: selectedJob || "",
-      resumeFile: referralData.resumeFile,
-    });
-    setShowReferralForm(false);
-    setReferralData({
-      candidateName: "",
-      candidateEmail: "",
-      candidatePhone: "",
-      relationship: "",
-      resumeFile: null,
-      notes: "",
-    });
+    try {
+      await submitReferral({
+        candidateName: referralData.candidateName,
+        candidateEmail: referralData.candidateEmail,
+        candidatePhone: referralData.candidatePhone,
+        relationship: referralData.relationship,
+        notes: referralData.notes,
+        jobId: selectedJob || "",
+        resumeFile: referralData.resumeFile,
+      }).unwrap();
+
+      toast.success("Referral submitted");
+      setShowReferralForm(false);
+      setReferralData({
+        candidateName: "",
+        candidateEmail: "",
+        candidatePhone: "",
+        relationship: "",
+        resumeFile: null,
+        notes: "",
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Referral submit error:", err);
+      toast.error("Failed to submit referral. Please try again.");
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -26,7 +26,6 @@ import ReportsAnalytics from "./pages/hr/ReportAnalysis";
 // Employee Pages
 import BrowseJobs from "./pages/employee/BrowseJobs";
 
-import ReferCandidate from "./pages/employee/ReferCandidates";
 import MyReferrals from "./pages/employee/MyRefrals";
 import { CandidateDetails } from "./pages/hr/candidatePipeline/CandidateDetails";
 import { MyReferralDetails } from "./pages/employee/MyRefralsDetails";
@@ -160,15 +159,7 @@ function App() {
 
       
 
-        <Route
-          path="/refer"
-          element={
-            <DashboardLayout role="employee">
-              <ReferCandidate />
-            </DashboardLayout>
-          }
-        />
-
+      
         <Route
           path="/my-referrals"
           element={

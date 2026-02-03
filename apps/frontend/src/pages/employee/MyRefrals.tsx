@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useGetMyReferralsQuery } from "@/store/api/refralApi";
 import type {  ReferralStatus } from "@/store/api/refralApi";
 import { useNavigate } from "react-router-dom";
@@ -78,6 +79,12 @@ const MyReferrals = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const { data: referrals = [], isLoading, isError } = useGetMyReferralsQuery();
+
+  useEffect(() => {
+    if (isError) {
+      toast.error("Failed to load your referrals. Please try again.");
+    }
+  }, [isError]);
 
   // Calculate statistics
   const totalReferrals = referrals.length;
