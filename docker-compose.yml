@@ -1,0 +1,31 @@
+  services:
+    mongo:
+      image: mongo:6
+      container_name: libas-mongo
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongo-data:/data/db
+
+    backend:
+      build: ./apps/backend
+      container_name: libas-backend
+      ports:
+        - "4000:4000"
+      env_file:
+        - .env
+      volumes:
+        - ./apps/backend/src/uploads:/app/src/uploads
+      depends_on:
+        - mongo
+
+    frontend:
+      build: ./apps/frontend
+      container_name: libas-frontend
+      ports:
+        - "3000:80"
+      depends_on:
+        - backend
+
+  volumes:
+    mongo-data:

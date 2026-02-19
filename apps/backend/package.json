@@ -9,10 +9,12 @@
     "serve:local": "cross-env NODE_ENV=production node dist/server.js"
   },
   "dependencies": {
+    "axios": "^1.13.5",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "form-data": "^4.0.5",
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.11.0",
     "mongoose": "^9.1.5",
@@ -27,6 +29,7 @@
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.2",
+    "@types/form-data": "^2.2.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^2.0.0",
