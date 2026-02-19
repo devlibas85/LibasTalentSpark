@@ -1,4 +1,3 @@
-
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export type ReferralStatus =
@@ -8,23 +7,71 @@ export type ReferralStatus =
   | "rejected"
   | "hired";
 
+export type ReferralAction =
+  | "submitted"
+  | "reviewed"
+  | "interview_scheduled"
+  | "rejected"
+  | "hired";
+
+export interface ActionHistoryItem {
+  action: ReferralAction;
+  actionBy: {
+    _id: string;
+    name?: string;
+    email?: string;
+  } | string;
+  actionAt: string;
+  remarks?: string;
+}
+
 export interface AIEvaluation {
+  // ── Nested structure (current backend schema) ──────────────────────────────
+  summary?: {
+    score?: number;
+    verdict?: string;
+    confidence?: string;
+  };
+
+  skills?: {
+    match_percentage?: number;
+    matched?: string[];
+    missing?: string[];
+    critical_gap?: boolean;
+  };
+
+  experience?: {
+    candidate_years?: number;
+    required_years?: number;
+    meets_requirement?: boolean;
+    gap_months?: number;
+    career_break_detected?: boolean;
+    overlap_detected?: boolean;
+    leadership_bonus_applied?: boolean;
+    overqualified_flag?: boolean;
+  };
+
+  // ── Flat / root-level fields (backward-compat & direct AI pipeline output) ─
   keyword_score?: number;
   title_similarity?: number;
   skills_score?: number;
   exp_score?: number;
-  jd_title?: number;
-  resume_title?: number;
+  jd_title?: string;
+  resume_title?: string;
   jd_years?: number;
   resume_years?: number;
   matched_keywords?: string[];
   missing_keywords?: string[];
+
+  // ── Shared fields ──────────────────────────────────────────────────────────
+  risk_flags?: string[];
+  recommendation?: string;
+  llm_explanation?: string;
   evaluatedAt?: string;
 }
 
 export interface Referral {
   _id: string;
-  atsScore?: number;
   candidateName: string;
   candidateEmail: string;
   candidatePhone: string;
@@ -43,14 +90,15 @@ export interface Referral {
     name: string;
     email: string;
   };
-  actionHistory?: Array<{
-    action: string;
-    actionBy: string;
-    actionAt: string;
-    remarks?: string;
-  }>;
+  actionHistory?: ActionHistoryItem[];
   aiEvaluation?: AIEvaluation;
   deleted: boolean;
+  deletedAt?: string;
+  deletedBy?: {
+    _id: string;
+    name?: string;
+    email?: string;
+  } | string;
   createdAt: string;
   updatedAt: string;
 }
@@ -75,11 +123,18 @@ export const referralApi = createApi({
       providesTags: ["Referrals"],
     }),
 
+    // Get all referrals (admin/HR)
     getAllReferrals: builder.query<Referral[], void>({
       query: () => "/referrals",
       providesTags: ["Referrals"],
     }),
-    
+
+    // Get single referral by ID
+    getReferralById: builder.query<Referral, string>({
+      query: (id) => `/referrals/${id}`,
+      providesTags: ["Referrals"],
+    }),
+
     // Update referral status
     updateReferral: builder.mutation<
       Referral,
@@ -135,9 +190,10 @@ export const referralApi = createApi({
   }),
 });
 
-export const { 
+export const {
   useGetMyReferralsQuery,
   useGetAllReferralsQuery,
+  useGetReferralByIdQuery,
   useUpdateReferralMutation,
-  useSubmitReferralMutation 
+  useSubmitReferralMutation
 } = referralApi;

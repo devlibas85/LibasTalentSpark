@@ -48,7 +48,7 @@ const name =
   raw.displayName ||
   "Unknown User";
 
-// ✅ ACCEPT WHAT WE GET
+
 const providerId =
   raw.oid ||
   raw.sub ||

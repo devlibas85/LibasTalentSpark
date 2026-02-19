@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useGetAllReferralsQuery, useUpdateReferralMutation } from "@/store/api/refralApi";
+import { useState, useEffect } from "react";
+import {
+  useGetAllReferralsQuery,
+  useUpdateReferralMutation,
+} from "@/store/api/refralApi";
 import type { Referral, ReferralStatus } from "@/store/api/refralApi";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -21,7 +24,6 @@ import {
   MessageSquare,
   MoreVertical,
   Edit,
-  Trash2,
   Share2,
   Users,
   History,
@@ -64,19 +66,47 @@ const statusConfig: Record<
     icon: CheckCircle2,
   },
 };
+
 const calculateATSScore = (ai?: Referral["aiEvaluation"]) => {
   if (!ai) return 0;
 
-  const scores = [
-    ai.keyword_score,
-    ai.skills_score,
-    ai.exp_score,
-    ai.title_similarity,
-  ].filter((v): v is number => typeof v === "number");
+  // 1. Prefer explicit summary score
+  if (ai.summary?.score != null) {
+    return Math.round(ai.summary.score);
+  }
 
-  if (scores.length === 0) return 0;
+  // 2. Use flat root-level scores if present
+  const flatScores = [ai.keyword_score, ai.skills_score, ai.exp_score];
+  if (flatScores.some((s) => s != null)) {
+    const filled = flatScores.filter((s) => s != null) as number[];
+    return Math.round(filled.reduce((a, b) => a + b, 0) / filled.length);
+  }
 
-  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  // 3. Fall back to nested skills match percentage
+  if (ai.skills?.match_percentage != null) {
+    return Math.round(ai.skills.match_percentage);
+  }
+
+  return 0;
+};
+
+/**
+ * Returns true when the aiEvaluation object has enough data to render the
+ * score panel. Checks BOTH flat and nested structures so the spinner is not
+ * shown indefinitely when the backend uses either format.
+ */
+const hasEvaluationScores = (ai: Referral["aiEvaluation"]): boolean => {
+  if (!ai) return false;
+
+  const hasFlatScores =
+    ai.keyword_score != null ||
+    ai.skills_score != null ||
+    ai.exp_score != null;
+
+  const hasNestedScores =
+    ai.summary?.score != null || ai.skills?.match_percentage != null;
+
+  return hasFlatScores || hasNestedScores;
 };
 
 const scoreColor = (score: number) => {
@@ -85,17 +115,40 @@ const scoreColor = (score: number) => {
   return "text-red-600";
 };
 
+const recommendationMeta = (rec?: string) => {
+  if (!rec) return { label: "Pending", color: "bg-gray-100 text-gray-600" };
+
+  const value = rec.toLowerCase();
+
+  if (value.includes("hire"))
+    return { label: rec, color: "bg-green-100 text-green-700" };
+
+  if (value.includes("interview"))
+    return { label: rec, color: "bg-yellow-100 text-yellow-700" };
+
+  if (value.includes("reject"))
+    return { label: rec, color: "bg-red-100 text-red-700" };
+
+  return { label: rec, color: "bg-blue-100 text-blue-700" };
+};
 
 export const CandidateDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState<
     "overview" | "timeline" | "notes"
   >("overview");
   const [actionRemarks, setActionRemarks] = useState("");
+  const [showExplanation, setShowExplanation] = useState(false);
 
-  const { data: referrals = [], isLoading, isError, refetch } =
-    useGetAllReferralsQuery();
+  const {
+    data: referrals = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useGetAllReferralsQuery();
+
   const [updateReferral] = useUpdateReferralMutation();
 
   const referral = referrals.find((r: Referral) => r._id === id);
@@ -106,6 +159,7 @@ export const CandidateDetails = () => {
       toast.error("Invalid candidate ID");
       return;
     }
+
     try {
       await updateReferral({
         id,
@@ -114,6 +168,7 @@ export const CandidateDetails = () => {
           remarks: remarks || actionRemarks,
         },
       }).unwrap();
+
       toast.success("Referral updated successfully");
       setActionRemarks("");
       refetch();
@@ -122,22 +177,22 @@ export const CandidateDetails = () => {
     }
   };
 
-  // Handle reject
   const handleReject = async () => {
     await handleStatusUpdate("rejected", actionRemarks);
   };
 
-  // Handle schedule interview
+  useEffect(() => {
+    console.log("All Referrals API Response:", referrals);
+  }, [referrals]);
+
   const handleScheduleInterview = async () => {
     await handleStatusUpdate("interview_scheduled", actionRemarks);
   };
 
-  // Handle hire
   const handleHire = async () => {
     await handleStatusUpdate("hired", actionRemarks);
   };
 
-  // Handle send email
   const handleSendEmail = () => {
     if (referral?.candidateEmail) {
       window.location.href = `mailto:${referral.candidateEmail}`;
@@ -145,13 +200,11 @@ export const CandidateDetails = () => {
     }
   };
 
-  
-
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading candidate details...</p>
         </div>
       </div>
@@ -160,13 +213,13 @@ export const CandidateDetails = () => {
 
   if (isError) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-red-900 mb-2">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             Failed to Load Data
           </h2>
-          <p className="text-red-700 mb-4">
+          <p className="text-muted-foreground mb-6">
             We couldn't retrieve the candidate information. Please try again.
           </p>
           <button
@@ -182,13 +235,13 @@ export const CandidateDetails = () => {
 
   if (!referral) {
     return (
-      <div className="p-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-          <AlertCircle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-yellow-900 mb-2">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <XCircle size={48} className="text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-foreground mb-2">
             Candidate Not Found
           </h2>
-          <p className="text-yellow-700 mb-4">
+          <p className="text-muted-foreground mb-6">
             The candidate you're looking for doesn't exist or has been removed.
           </p>
           <button
@@ -205,7 +258,6 @@ export const CandidateDetails = () => {
   const status = statusConfig[referral.status];
   const StatusIcon = status.icon;
 
-  // Get initials
   const initials = referral.candidateName
     .split(" ")
     .map((n) => n[0])
@@ -213,51 +265,41 @@ export const CandidateDetails = () => {
     .toUpperCase()
     .slice(0, 2);
 
-
-
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/candidates")}
-                className="p-2 hover:bg-muted rounded-lg transition-colors"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  {referral.candidateName}
-                </h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  Applied for {referral.job?.title || "Unknown Position"}
-                </p>
-              </div>
-            </div>
+      <div className="max-w-[1600px] mx-auto p-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/candidates")}
+              className="p-2 hover:bg-muted rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
 
-            <div className="flex items-center gap-3">
-              <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
-                <Share2 size={16} />
-                Share
-              </button>
-              <button className="px-4 py-2 border rounded-lg hover:bg-muted transition-colors flex items-center gap-2">
-                <Edit size={16} />
-                Edit
-              </button>
-              <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                <MoreVertical size={20} />
-              </button>
+            <div>
+              <h1 className="text-2xl font-bold">{referral.candidateName}</h1>
+              <p className="text-sm text-muted-foreground">
+                Applied for {referral.job?.title || "Unknown Position"}
+              </p>
             </div>
           </div>
+
+          <div className="flex gap-2">
+            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+              <Share2 size={18} />
+            </button>
+            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+              <Edit size={18} />
+            </button>
+            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+              <MoreVertical size={18} />
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Main Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Candidate Profile Card */}
@@ -267,108 +309,79 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <div className="flex items-start gap-6">
-                {/* Avatar */}
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 border-2 border-primary/20">
-                  <span className="text-3xl font-bold text-primary">
-                    {initials}
-                  </span>
+                <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold">
+                  {initials}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-foreground mb-1">
-                        {referral.candidateName}
-                      </h2>
-                      <p className="text-lg text-muted-foreground">
-                        {referral.job?.title || "Position Not Specified"}
-                      </p>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border ${status.bg}`}
-                    >
-                      <StatusIcon size={18} className={status.color} />
-                      <span className={`font-semibold ${status.color}`}>
-                        {status.label}
-                      </span>
-                    </div>
+                  <h2 className="text-2xl font-bold mb-1">
+                    {referral.candidateName}
+                  </h2>
+                  <p className="text-muted-foreground mb-4">
+                    {referral.job?.title || "Position Not Specified"}
+                  </p>
+
+                  <span
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${status.bg}`}
+                  >
+                    <StatusIcon size={16} className={status.color} />
+                    <span className={`text-sm font-medium ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                <div className="flex items-center gap-3">
+                  <Mail size={18} className="text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Email</p>
+                    <p className="text-sm font-medium">{referral.candidateEmail}</p>
                   </div>
+                </div>
 
-                  {/* Contact Info Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                        <Mail size={18} className="text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Email</p>
-                        <a
-                          href={`mailto:${referral.candidateEmail}`}
-                          className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                          {referral.candidateEmail}
-                        </a>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Phone size={18} className="text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
+                    <p className="text-sm font-medium">{referral.candidatePhone}</p>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                        <Phone size={18} className="text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Phone</p>
-                        <a
-                          href={`tel:${referral.candidatePhone}`}
-                          className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                          {referral.candidatePhone}
-                        </a>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <MapPin size={18} className="text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Location</p>
+                    <p className="text-sm font-medium">
+                      {referral.job?.location || "Not Specified"}
+                    </p>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                        <MapPin size={18} className="text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Location
-                        </p>
-                        <p className="text-sm font-medium">
-                          {referral.job?.location || "Not Specified"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
-                        <Calendar size={18} className="text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">
-                          Applied On
-                        </p>
-                        <p className="text-sm font-medium">
-                          {new Date(referral.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )}
-                        </p>
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Calendar size={18} className="text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5">Applied On</p>
+                    <p className="text-sm font-medium">
+                      {new Date(referral.createdAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>
             </motion.div>
 
             {/* Tabs */}
-            <div className="bg-card border rounded-2xl overflow-hidden">
-              {/* Tab Headers */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-card border rounded-2xl overflow-hidden"
+            >
               <div className="flex border-b">
                 {[
                   { id: "overview" as const, label: "Overview", icon: FileText },
@@ -390,6 +403,7 @@ export const CandidateDetails = () => {
                         <Icon size={18} />
                         {tab.label}
                       </div>
+
                       {activeTab === tab.id && (
                         <motion.div
                           layoutId="activeTab"
@@ -401,166 +415,128 @@ export const CandidateDetails = () => {
                 })}
               </div>
 
-              {/* Tab Content */}
               <div className="p-6">
                 {activeTab === "overview" && (
-                  <motion.div
-                    key="overview"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-6"
-                  >
-                    {/* Job Details */}
+                  <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Briefcase size={20} className="text-primary" />
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <Briefcase size={18} className="text-primary" />
                         Position Details
                       </h3>
-                      <div className="bg-muted/30 rounded-xl p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Title</span>
-                          <span className="font-medium">
-                            {referral.job?.title || "—"}
-                          </span>
+                          <span className="font-medium">{referral.job?.title || "—"}</span>
                         </div>
+
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Location
-                          </span>
-                          <span className="font-medium">
-                            {referral.job?.location || "—"}
-                          </span>
+                          <span className="text-muted-foreground">Location</span>
+                          <span className="font-medium">{referral.job?.location || "—"}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Job ID
-                          </span>
-                          <span className="font-mono text-sm">
-                            {referral.job?._id || "—"}
-                          </span>
+
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-muted-foreground">Job ID</span>
+                          <span className="font-mono text-xs">{referral.job?._id || "—"}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Referral Information */}
-                    <div>
-                      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <Users size={20} className="text-primary" />
+                    <div className="border-t pt-6">
+                      <h3 className="font-semibold mb-4 flex items-center gap-2">
+                        <Users size={18} className="text-primary" />
                         Referral Information
                       </h3>
-                      <div className="bg-muted/30 rounded-xl p-4 space-y-3">
+                      <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Referred By
-                          </span>
+                          <span className="text-muted-foreground">Referred By</span>
                           <span className="font-medium">
                             {(referral.referredBy as any)?.name || "—"}
                           </span>
                         </div>
+
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Referrer Email
-                          </span>
+                          <span className="text-muted-foreground">Referrer Email</span>
                           <span className="font-medium">
                             {(referral.referredBy as any)?.email || "—"}
                           </span>
                         </div>
+
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">
-                            Relationship
-                          </span>
-                          <span className="font-medium capitalize">
-                            {referral.relationship || "—"}
-                          </span>
+                          <span className="text-muted-foreground">Relationship</span>
+                          <span className="font-medium">{referral.relationship || "—"}</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Resume */}
                     {referral.resume && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <FileText size={20} className="text-primary" />
+                      <div className="border-t pt-6">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <FileText size={18} className="text-primary" />
                           Resume
                         </h3>
-                        <div className="bg-gradient-to-r from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                                <FileText
-                                  size={24}
-                                  className="text-primary"
-                                />
-                              </div>
-                              <div>
-                                <p className="font-medium">Resume.pdf</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Uploaded on{" "}
-                                  {new Date(
-                                    referral.createdAt
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
+
+                        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border">
+                          <div className="flex items-center gap-3">
+                            <FileText size={20} className="text-primary" />
+                            <div>
+                              <p className="font-medium text-sm">Resume.pdf</p>
+                              <p className="text-xs text-muted-foreground">
+                                Uploaded on{" "}
+                                {new Date(referral.createdAt).toLocaleDateString()}
+                              </p>
                             </div>
-                            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors flex items-center gap-2">
-                              <Download size={16} />
-                              Download
-                            </button>
                           </div>
+                          <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm flex items-center gap-2">
+                            <Download size={16} />
+                            Download
+                          </button>
                         </div>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
 
                 {activeTab === "timeline" && (
-                  <motion.div
-                    key="timeline"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    <h3 className="text-lg font-semibold mb-4">
+                  <div>
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <History size={18} className="text-primary" />
                       Action History
                     </h3>
-                    {referral.actionHistory &&
-                    referral.actionHistory.length > 0 ? (
-                      <div className="space-y-4">
+
+                    {referral.actionHistory && referral.actionHistory.length > 0 ? (
+                      <div className="relative space-y-6">
                         {referral.actionHistory.map((action, index) => (
-                          <div
-                            key={index}
-                            className="flex gap-4 relative pb-4"
-                          >
-                            {/* Timeline Line */}
+                          <div key={index} className="relative flex gap-4">
                             {index !== referral.actionHistory!.length - 1 && (
-                              <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-border"></div>
+                              <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-border" />
                             )}
 
-                            {/* Icon */}
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 relative z-10">
-                              <Clock size={18} className="text-primary" />
+                            <div className="relative flex-shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Clock size={18} className="text-primary" />
+                              </div>
                             </div>
 
-                            {/* Content */}
-                            <div className="flex-1 bg-muted/30 rounded-xl p-4">
-                              <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-semibold capitalize">
+                            <div className="flex-1 pb-8">
+                              <div className="bg-muted/30 rounded-xl p-4 border">
+                                <p className="font-medium mb-1 capitalize">
                                   {action.action.replace("_", " ")}
-                                </h4>
-                                <span className="text-sm text-muted-foreground">
-                                  {new Date(
-                                    action.actionAt
-                                  ).toLocaleDateString("en-US", {
+                                </p>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {new Date(action.actionAt).toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                     hour: "2-digit",
                                     minute: "2-digit",
                                   })}
-                                </span>
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  Action performed by:{" "}
+                                  {(action.actionBy as any)?.name ||
+                                    (action.actionBy as any)?.email ||
+                                    "Unknown"}
+                                </p>
                               </div>
-                              <p className="text-sm text-muted-foreground">
-                                Action performed by user ID: {(action.actionBy as any)?._id || action.actionBy || "Unknown"}
-                              </p>
                             </div>
                           </div>
                         ))}
@@ -571,45 +547,35 @@ export const CandidateDetails = () => {
                         <p>No timeline events yet</p>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
 
                 {activeTab === "notes" && (
-                  <motion.div
-                    key="notes"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="space-y-4"
-                  >
-                    <h3 className="text-lg font-semibold mb-4">
+                  <div>
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <MessageSquare size={18} className="text-primary" />
                       Referral Notes
                     </h3>
+
                     {referral.notes ? (
-                      <div className="bg-muted/30 rounded-xl p-4">
-                        <p className="text-foreground whitespace-pre-wrap leading-relaxed">
-                          {referral.notes}
-                        </p>
+                      <div className="bg-muted/30 rounded-xl p-4 border">
+                        <p className="text-sm whitespace-pre-wrap">{referral.notes}</p>
                       </div>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        <MessageSquare
-                          size={48}
-                          className="mx-auto mb-3 opacity-20"
-                        />
+                        <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
                         <p>No notes available</p>
                       </div>
                     )}
-                  </motion.div>
+                  </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           </div>
-          {/* ATS Scan Result */}
 
-
-
-          {/* Right Column - Actions & Quick Stats */}
+          {/* Right Column */}
           <div className="space-y-6">
+            {/* ATS Scan Result */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -623,13 +589,43 @@ export const CandidateDetails = () => {
 
               {referral.aiEvaluation ? (
                 (() => {
-                  const ats = calculateATSScore(referral.aiEvaluation);
-                  const matchedSkills = referral.aiEvaluation?.matched_keywords ?? [];
-                  const missingSkills = referral.aiEvaluation?.missing_keywords ?? [];
+                  const ai = referral.aiEvaluation;
+                  const ats = calculateATSScore(ai);
+
+                  // Resolve matched/missing from flat fields first, then nested fallback
+                  const matchedSkills =
+                    ai.matched_keywords ?? ai.skills?.matched ?? [];
+                  const missingSkills =
+                    ai.missing_keywords ?? ai.skills?.missing ?? [];
+
+                  // Resolve experience from flat fields first, then nested fallback
+                  const candidateYears =
+                    ai.resume_years ?? ai.experience?.candidate_years ?? 0;
+                  const requiredYears =
+                    ai.jd_years ?? ai.experience?.required_years ?? 0;
+
+                  const meta = recommendationMeta(ai.recommendation);
+
+                  if (!hasEvaluationScores(ai)) {
+                    return (
+                      <div className="text-center py-6">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3" />
+                        <p className="text-muted-foreground text-sm">
+                          AI evaluation in progress...
+                        </p>
+                        {ai.evaluatedAt && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Evaluated at:{" "}
+                            {new Date(ai.evaluatedAt).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }
 
                   return (
-                    <div className="space-y-4">
-                      {/* Overall ATS */}
+                    <div className="space-y-5">
+                      {/* Overall Score */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm text-muted-foreground">
@@ -656,87 +652,198 @@ export const CandidateDetails = () => {
                         </div>
                       </div>
 
-                      {/* Detailed Scores */}
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Keyword Match</span>
-                          <span>{referral.aiEvaluation.keyword_score ?? "—"}%</span>
+                      {/* Detailed Scores — flat fields */}
+                      {(ai.keyword_score != null ||
+                        ai.skills_score != null ||
+                        ai.exp_score != null) && (
+                        <div className="space-y-2 text-sm border-t pt-4">
+                          {ai.keyword_score != null && (
+                            <div className="flex justify-between">
+                              <span>Keyword Match</span>
+                              <span className="font-semibold">{ai.keyword_score}%</span>
+                            </div>
+                          )}
+                          {ai.skills_score != null && (
+                            <div className="flex justify-between">
+                              <span>Skills Match</span>
+                              <span className="font-semibold">{ai.skills_score}%</span>
+                            </div>
+                          )}
+                          {ai.exp_score != null && (
+                            <div className="flex justify-between">
+                              <span>Experience Match</span>
+                              <span className="font-semibold">{ai.exp_score}%</span>
+                            </div>
+                          )}
+                          {ai.title_similarity != null && (
+                            <div className="flex justify-between">
+                              <span>Title Similarity</span>
+                              <span className="font-semibold">{ai.title_similarity}%</span>
+                            </div>
+                          )}
                         </div>
+                      )}
 
+                      {/* Detailed Scores — nested fallback (summary + skills) */}
+                      {ai.keyword_score == null &&
+                        ai.skills_score == null &&
+                        ai.exp_score == null &&
+                        ai.summary?.score != null && (
+                          <div className="space-y-2 text-sm border-t pt-4">
+                            <div className="flex justify-between">
+                              <span>Score</span>
+                              <span className="font-semibold">{ai.summary.score}%</span>
+                            </div>
+                            {ai.summary.verdict && (
+                              <div className="flex justify-between">
+                                <span>Verdict</span>
+                                <span className="font-semibold capitalize">{ai.summary.verdict}</span>
+                              </div>
+                            )}
+                            {ai.summary.confidence && (
+                              <div className="flex justify-between">
+                                <span>Confidence</span>
+                                <span className="font-semibold capitalize">{ai.summary.confidence}</span>
+                              </div>
+                            )}
+                            {ai.skills?.match_percentage != null && (
+                              <div className="flex justify-between">
+                                <span>Skills Match</span>
+                                <span className="font-semibold">{ai.skills.match_percentage}%</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      {/* Experience */}
+                      <div className="space-y-2 text-sm border-t pt-4">
                         <div className="flex justify-between">
-                          <span>Skills Match</span>
-                          <span>{referral.aiEvaluation.skills_score ?? "—"}%</span>
+                          <span>Candidate Experience</span>
+                          <span className="font-semibold">{candidateYears} yrs</span>
                         </div>
-
                         <div className="flex justify-between">
-                          <span>Experience Match</span>
-                          <span>{referral.aiEvaluation.exp_score ?? "—"}%</span>
+                          <span>Required Experience</span>
+                          <span className="font-semibold">{requiredYears} yrs</span>
                         </div>
-
                         <div className="flex justify-between">
-                          <span>Title Similarity</span>
-                          <span>{referral.aiEvaluation.title_similarity ?? "—"}%</span>
+                          <span>Meets Requirement</span>
+                          <span
+                            className={`font-semibold ${
+                              candidateYears >= requiredYears
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {candidateYears >= requiredYears ? "Yes ✓" : "No ✗"}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Keyword Insights */}
-                      {/* Keyword Insights */}
-                      <div className="pt-3 border-t space-y-4">
-                        {/* Matched Skills */}
-                        <div>
+                      {/* AI Recommendation */}
+                      {ai.recommendation && (
+                        <div className="border-t pt-4">
                           <p className="text-sm text-muted-foreground mb-2">
-                            Matched Skills
+                            AI Recommendation
                           </p>
-
-                          {matchedSkills.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {matchedSkills.map((skill, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-3 py-1 rounded-full text-xs font-medium
-                                             bg-green-100 text-green-700 border border-green-200"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">None</p>
-                          )}
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${meta.color}`}
+                          >
+                            {meta.label}
+                          </span>
                         </div>
+                      )}
 
-                        {/* Missing Skills */}
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Missing Skills
-                          </p>
+                      {/* Matched Skills */}
+                      <div className="border-t pt-4">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Matched Keywords ({matchedSkills.length})
+                        </p>
 
-                          {missingSkills.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {missingSkills.map((skill, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-3 py-1 rounded-full text-xs font-medium
-                                             bg-red-100 text-red-700 border border-red-200"
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">None 🎉</p>
-                          )}
-                        </div>
+                        {matchedSkills.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {matchedSkills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 rounded-full text-xs font-medium
+                                           bg-green-100 text-green-700 border border-green-200"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">None found</p>
+                        )}
                       </div>
 
+                      {/* Missing Skills */}
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Missing Keywords ({missingSkills.length})
+                        </p>
 
-                      {/* Meta */}
-                      {referral.aiEvaluation.evaluatedAt && (
+                        {missingSkills.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {missingSkills.map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 rounded-full text-xs font-medium
+                                           bg-red-100 text-red-700 border border-red-200"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">None 🎉</p>
+                        )}
+                      </div>
+
+                      {/* Risk Flags */}
+                      {ai.risk_flags?.length ? (
+                        <div className="border-t pt-4">
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Risk Analysis
+                          </p>
+
+                          <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+                            {ai.risk_flags.map((flag, index) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 text-sm text-red-700"
+                              >
+                                <AlertCircle size={16} className="mt-0.5" />
+                                <span>{flag}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* AI Explanation */}
+                      {ai.llm_explanation && (
+                        <div className="border-t pt-4">
+                          <button
+                            onClick={() => setShowExplanation(!showExplanation)}
+                            className="text-sm font-medium text-primary hover:underline"
+                          >
+                            {showExplanation
+                              ? "Hide AI Explanation"
+                              : "View AI Explanation"}
+                          </button>
+
+                          {showExplanation && (
+                            <div className="mt-3 bg-muted/30 rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed">
+                              {ai.llm_explanation}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {ai.evaluatedAt && (
                         <p className="text-xs text-muted-foreground pt-2">
                           Last scanned on{" "}
-                          {new Date(
-                            referral.aiEvaluation.evaluatedAt
-                          ).toLocaleDateString()}
+                          {new Date(ai.evaluatedAt).toLocaleDateString()}
                         </p>
                       )}
                     </div>
@@ -748,7 +855,7 @@ export const CandidateDetails = () => {
                 </div>
               )}
             </motion.div>
-            
+
             {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
@@ -757,68 +864,80 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3 mb-4">
-                {referral?.status === "submitted" || referral?.status === "under_review" ? (
+
+              <div className="space-y-3">
+                {referral?.status === "submitted" ||
+                referral?.status === "under_review" ? (
                   <>
-                    <button 
+                    <button
                       onClick={handleScheduleInterview}
-                      className="w-full px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                      className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       <Calendar size={18} />
                       Schedule Interview
                     </button>
-                    <button 
+
+                    <button
                       onClick={handleReject}
-                      className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                      className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
                     >
-                      <Trash2 size={18} />
+                      <XCircle size={18} />
                       Reject Candidate
                     </button>
                   </>
                 ) : referral?.status === "interview_scheduled" ? (
                   <>
-                    <button 
+                    <button
                       onClick={handleHire}
-                      className="w-full px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 font-medium"
+                      className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       <CheckCircle2 size={18} />
                       Mark as Hired
                     </button>
-                    <button 
+
+                    <button
                       onClick={handleReject}
-                      className="w-full px-4 py-3 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2 font-medium"
+                      className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
                     >
-                      <Trash2 size={18} />
+                      <XCircle size={18} />
                       Reject After Interview
                     </button>
                   </>
                 ) : (
-                  <div className="text-center text-muted-foreground text-sm py-4">
+                  <div className="text-center py-6 text-muted-foreground text-sm">
                     No actions available for this status
                   </div>
                 )}
-                <button 
+
+                <button
                   onClick={handleSendEmail}
-                  className="w-full px-4 py-3 border rounded-xl hover:bg-muted transition-colors flex items-center justify-center gap-2 font-medium"
+                  className="w-full px-4 py-3 bg-muted hover:bg-muted/80 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   <Mail size={18} />
                   Send Email
                 </button>
               </div>
+            </motion.div>
 
-              {/* Remarks Section */}
-              <div className="border-t pt-4">
-                <label className="block text-sm font-medium mb-2">
-                  Add Remarks
-                </label>
-                <textarea
-                  value={actionRemarks}
-                  onChange={(e) => setActionRemarks(e.target.value)}
-                  rows={3}
-                  className="w-full px-3 py-2 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
-                  placeholder="Add notes or remarks..."
-                />
-              </div>
+            {/* Remarks */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-card border rounded-2xl p-6"
+            >
+              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                <MessageSquare size={18} className="text-primary" />
+                Add Remarks
+              </h3>
+
+              <textarea
+                value={actionRemarks}
+                onChange={(e) => setActionRemarks(e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent resize-none text-sm"
+                placeholder="Add notes or remarks..."
+              />
             </motion.div>
 
             {/* Status Badge */}
@@ -829,20 +948,24 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Current Status</h3>
+
               <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border">
-                {referral && (() => {
-                  const config = statusConfig[referral.status];
-                  const Icon = config.icon;
-                  return (
-                    <>
-                      <Icon size={24} className={config.color} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Status</p>
-                        <p className={`font-semibold ${config.color}`}>{config.label}</p>
-                      </div>
-                    </>
-                  );
-                })()}
+                {referral &&
+                  (() => {
+                    const config = statusConfig[referral.status];
+                    const Icon = config.icon;
+                    return (
+                      <>
+                        <Icon size={24} className={config.color} />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Status</p>
+                          <p className={`font-semibold ${config.color}`}>
+                            {config.label}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
               </div>
             </motion.div>
 
@@ -854,6 +977,7 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Metadata</h3>
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Created</span>
@@ -861,16 +985,19 @@ export const CandidateDetails = () => {
                     {new Date(referral.createdAt).toLocaleDateString()}
                   </span>
                 </div>
+
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Last Updated</span>
                   <span className="font-medium">
                     {new Date(referral.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
+
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Candidate ID</span>
                   <span className="font-mono text-xs">{referral._id}</span>
                 </div>
+
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Deleted</span>
                   <span

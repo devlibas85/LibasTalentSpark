@@ -28,6 +28,16 @@ import {
   useSubmitReferralMutation,
 } from "@/store/api/refralApi";
 
+interface StatItem {
+  label: string;
+  value: number;
+  icon: any;
+  color: string;
+  borderColor: string;
+  iconColor: string;
+}
+
+
 export default function EmployeeDashboard() {
   // Reuse existing jobs query - filter for published jobs only
   const { data: allJobs = [], isLoading: jobsLoading, isError: jobsError } = useGetJobsQuery();
@@ -54,41 +64,57 @@ export default function EmployeeDashboard() {
     notes: "",
   });
 
+const REFERRAL_STATUS = {
+  PENDING: ["submitted", "under_review", "interview_scheduled"],
+  HIRED: ["hired"],
+};
+
+
+
   // Calculate stats from real data
-  const stats = [
-    {
-      label: "Open Positions",
-      value: openJobs.length,
-      icon: Briefcase,
-      color: "bg-gradient-to-br from-primary/20 to-primary/5",
-      borderColor: "hover:border-primary/50",
-      iconColor: "bg-primary/10 text-primary",
-    },
-    {
-      label: "My Referrals",
-      value: myReferrals.length,
-      icon: Users,
-      color: "bg-gradient-to-br from-blue-500/20 to-blue-500/5",
-      borderColor: "hover:border-blue-500/50",
-      iconColor: "bg-blue-500/10 text-blue-500",
-    },
-    {
-      label: "Pending Review",
-      value: myReferrals.filter((r: any) => r.status === "Under Review" || r.status === "Pending").length,
-      icon: Clock,
-      color: "bg-gradient-to-br from-amber-500/20 to-amber-500/5",
-      borderColor: "hover:border-amber-500/50",
-      iconColor: "bg-amber-500/10 text-amber-500",
-    },
-    {
-      label: "Successful Hires",
-      value: myReferrals.filter((r: any) => r.status === "Hired").length,
-      icon: CheckCircle,
-      color: "bg-gradient-to-br from-emerald-500/20 to-emerald-500/5",
-      borderColor: "hover:border-emerald-500/50",
-      iconColor: "bg-emerald-500/10 text-emerald-500",
-    },
-  ];
+const stats: StatItem[] = [
+  {
+    label: "Open Positions",
+    value: openJobs.length,
+    icon: Briefcase,
+    color: "bg-gradient-to-br from-primary/20 to-primary/5",
+    borderColor: "hover:border-primary/50",
+    iconColor: "bg-primary/10 text-primary",
+  },
+
+  {
+    label: "My Referrals",
+    value: myReferrals.length,
+    icon: Users,
+    color: "bg-gradient-to-br from-blue-500/20 to-blue-500/5",
+    borderColor: "hover:border-blue-500/50",
+    iconColor: "bg-blue-500/10 text-blue-500",
+  },
+
+  {
+    label: "Pending Review",
+    value: myReferrals.filter((r: any) =>
+      REFERRAL_STATUS.PENDING.includes(r.status?.toLowerCase())
+    ).length,
+    icon: Clock,
+    color: "bg-gradient-to-br from-amber-500/20 to-amber-500/5",
+    borderColor: "hover:border-amber-500/50",
+    iconColor: "bg-amber-500/10 text-amber-500",
+  },
+
+  {
+    label: "Successful Hires",
+    value: myReferrals.filter((r: any) =>
+      REFERRAL_STATUS.HIRED.includes(r.status?.toLowerCase())
+    ).length,
+    icon: CheckCircle,
+    color: "bg-gradient-to-br from-emerald-500/20 to-emerald-500/5",
+    borderColor: "hover:border-emerald-500/50",
+    iconColor: "bg-emerald-500/10 text-emerald-500",
+  },
+];
+
+
 
   const handleReferralSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,23 +174,49 @@ export default function EmployeeDashboard() {
   };
 
   // Get status color for referrals
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "interview scheduled":
-      case "interviewing":
-        return "text-blue-600 bg-blue-500/10";
-      case "under review":
-      case "pending":
-        return "text-amber-600 bg-amber-500/10";
-      case "hired":
-      case "accepted":
-        return "text-emerald-600 bg-emerald-500/10";
-      case "rejected":
-        return "text-red-600 bg-red-500/10";
-      default:
-        return "text-gray-600 bg-gray-500/10";
-    }
-  };
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "submitted":
+      return "text-gray-600 bg-gray-500/10";
+
+    case "under_review":
+      return "text-amber-600 bg-amber-500/10";
+
+    case "interview_scheduled":
+      return "text-blue-600 bg-blue-500/10";
+
+    case "hired":
+      return "text-emerald-600 bg-emerald-500/10";
+
+    case "rejected":
+      return "text-red-600 bg-red-500/10";
+
+    default:
+      return "text-gray-600 bg-gray-500/10";
+  }
+};
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "submitted":
+      return "Submitted";
+
+    case "under_review":
+      return "Under Review";
+
+    case "interview_scheduled":
+      return "Interview Scheduled";
+
+    case "hired":
+      return "Hired";
+
+    case "rejected":
+      return "Rejected";
+
+    default:
+      return status;
+  }
+};
+
 
   // Loading state
   if (jobsLoading || referralsLoading) {
@@ -250,7 +302,7 @@ export default function EmployeeDashboard() {
                   ${item.color}
                   border-border/50
                   ${item.borderColor}
-                  transition-all duration-300
+                  transition-all duration-
                   group
                   hover:shadow-xl hover:shadow-primary/10
                 `}
@@ -352,7 +404,8 @@ export default function EmployeeDashboard() {
                             referral.status
                           )}`}
                         >
-                          {referral.status}
+                       {getStatusLabel(referral.status)}
+
                         </span>
                       </td>
                       <td className="py-4 text-muted-foreground">

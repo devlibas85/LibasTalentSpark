@@ -32,8 +32,10 @@ interface Candidate {
   avatar: string;
   salary: string;
   skills: string[];
-   atsScore: number;
+  atsScore: number;
+  aiEvaluation?: Referral["aiEvaluation"];   
 }
+
 
 const stages = [
   { id: "applied", label: "Applied", color: "bg-blue-500" },
@@ -55,21 +57,10 @@ const getStageFromStatus = (status: ReferralStatus): Candidate["stage"] => {
   return statusMap[status] || "applied";
 };
 const calculateAtsScore = (ai?: Referral["aiEvaluation"]) => {
-  if (!ai) return 0;
-
-  const scores = [
-    ai.keyword_score,
-    ai.skills_score,
-    ai.exp_score,
-    ai.title_similarity,
-  ].filter((v): v is number => typeof v === "number");
-
-  if (scores.length === 0) return 0;
-
-  return Math.round(
-    scores.reduce((a, b) => a + b, 0) / scores.length
-  );
+  if (!ai?.summary?.score) return 0;
+  return Math.round(ai.summary.score);
 };
+
 
 export default function CandidatePipeline() {
   const {
@@ -94,31 +85,42 @@ export default function CandidatePipeline() {
       .toUpperCase()
       .slice(0, 2);
 
-    return {
-      id: r._id,
-      name: r.candidateName,
-      email: r.candidateEmail,
-      phone: r.candidatePhone,
-      position: r.job?.title || "—",
-      location: r.job?.location || "Remote", 
-      experience: "Not specified", 
-      salary: "—",
-      skills: [], 
-      stage: getStageFromStatus(r.status),
-      appliedDate: r.createdAt,
-      rating: 4.5, 
-      avatar: initials,
-     atsScore: calculateAtsScore(r.aiEvaluation),
-
-    };
-  });
-  const getAtsMeta = (score: number) => {
-  if (score >= 80)
-    return { label: "Strong Match", color: "bg-green-500" };
-  if (score >= 60)
-    return { label: "Medium Match", color: "bg-yellow-500" };
-  return { label: "Low Match", color: "bg-red-500" };
+  return {
+  id: r._id,
+  name: r.candidateName,
+  email: r.candidateEmail,
+  phone: r.candidatePhone,
+  position: r.job?.title || "—",
+  location: r.job?.location || "Remote",
+  experience: r.aiEvaluation?.experience?.candidate_years
+    ? `${r.aiEvaluation.experience.candidate_years} yrs`
+    : "Not specified",
+  salary: "—",
+  skills: r.aiEvaluation?.skills?.matched || [],
+  stage: getStageFromStatus(r.status),
+  appliedDate: r.createdAt,
+  rating: 4.5,
+  avatar: initials,
+  atsScore: calculateAtsScore(r.aiEvaluation),
+  aiEvaluation: r.aiEvaluation,   // ✅ IMPORTANT
 };
+
+  });
+const getAtsMeta = (ai?: Referral["aiEvaluation"]) => {
+  const verdict = ai?.summary?.verdict;
+
+  if (!verdict)
+    return { label: "Pending", color: "bg-gray-400" };
+
+  if (verdict === "Strong Match")
+    return { label: verdict, color: "bg-green-500" };
+
+  if (verdict === "Medium Match")
+    return { label: verdict, color: "bg-yellow-500" };
+
+  return { label: verdict, color: "bg-red-500" };
+};
+
 
 
   const filteredCandidates = candidates.filter((candidate) => {
@@ -178,7 +180,7 @@ export default function CandidatePipeline() {
       {/* ATS Score */}
 {candidate.atsScore > 0 ? (
   (() => {
-    const { label, color } = getAtsMeta(candidate.atsScore);
+const { label, color } = getAtsMeta(candidate.aiEvaluation);
     return (
       <>
         <div className="flex items-center justify-between text-xs mb-1">

@@ -23,7 +23,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // allow server-to-server / curl / postman
+      
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
@@ -69,7 +69,7 @@ app.use("/health", healthRouter);
 app.use("/api/jobs", jobRouter);
 app.use("/api/profile", profileRouter)
 
-//  ADD THIS
+
 app.use("/api/referrals", referralRouter);
 
 export default app;

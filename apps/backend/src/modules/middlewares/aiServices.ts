@@ -70,6 +70,11 @@ export async function triggerAIAsync({
 
 console.log("🧠 Parsed AI result:", aiResult);
 
+if (!aiResult) {
+  console.warn("⚠️ AI returned empty result");
+  return;
+}
+
 await Referral.findByIdAndUpdate(
   referralId,
   {

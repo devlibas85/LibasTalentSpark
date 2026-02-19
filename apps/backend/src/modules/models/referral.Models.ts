@@ -75,26 +75,39 @@ const referralSchema = new Schema(
       default: "submitted",
     },
 aiEvaluation: {
-  keyword_score: { type: Number },
-  title_similarity: { type: Number },
-  skills_score: { type: Number },
-  exp_score: { type: Number },
+  summary: {
+    score: { type: Number },
+    verdict: { type: String },
+    confidence: { type: String },
+  },
 
-  // filenames or titles
-  jd_title: { type: String },
-  resume_title: { type: String },
+  skills: {
+    match_percentage: { type: Number },
+    matched: [{ type: String }],
+    missing: [{ type: String }],
+    critical_gap: { type: Boolean },
+  },
 
-  // years of experience
-  jd_years: { type: Number },
-  resume_years: { type: Number },
+  experience: {
+    candidate_years: { type: Number },
+    required_years: { type: Number },
+    meets_requirement: { type: Boolean },
+    gap_months: { type: Number },
+    career_break_detected: { type: Boolean },
+    overlap_detected: { type: Boolean },
+    leadership_bonus_applied: { type: Boolean },
+    overqualified_flag: { type: Boolean },
+  },
 
-  // keyword analysis
-  matched_keywords: [{ type: String }],
-  missing_keywords: [{ type: String }],
+  risk_flags: [{ type: String }],
 
-  // meta
+  recommendation: { type: String },
+
+  llm_explanation: { type: String },
+
   evaluatedAt: { type: Date },
 },
+
 
 
     // ===== HR / SYSTEM LOGS =====

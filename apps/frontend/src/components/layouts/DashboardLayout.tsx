@@ -16,8 +16,7 @@ export default function DashboardLayout({ role, children }: Props) {
     <div className="flex h-screen bg-background">
       <LibasSidebar
         role={role}
-        userName="Libas User"
-        userEmail="user@libas.in"
+      
         onNavigate={navigate}
       />
 
