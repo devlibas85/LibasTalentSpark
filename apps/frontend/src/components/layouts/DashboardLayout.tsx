@@ -16,7 +16,6 @@ export default function DashboardLayout({ role, children }: Props) {
     <div className="flex h-screen bg-background">
       <LibasSidebar
         role={role}
-      
         onNavigate={navigate}
       />
 

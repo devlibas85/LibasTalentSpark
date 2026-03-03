@@ -4,29 +4,28 @@ import { User } from "../models/user.Models.js";
 import type { AuthJwtPayload } from "../../types/jwt.js";
 import type { Request, Response, NextFunction } from "express";
 
+/* ────────────────────────────────────────────────────────────
+   requireAuth
+   Full middleware — reads cookie, verifies JWT, fetches user
+   from DB and attaches to req.user. Use on protected routes
+   that need the full user object (profile, jobs, etc.)
+──────────────────────────────────────────────────────────── */
 export async function requireAuth(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
-    const authHeader = req.headers.authorization;
+    // ✅ Read from httpOnly cookie instead of Authorization header
+    const token = req.cookies?.token;
 
-    if (!authHeader?.startsWith("Bearer ")) {
+    if (!token) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const token = authHeader.split(" ")[1];
-
-    // ✅ Fix: Properly type the decoded token
-    if (!token) {
-      return res.status(401).json({ error: "No token provided" });
-    }
-
     const decoded = jwt.verify(token, env.jwtSecret);
-    
-    // ✅ Type guard to ensure decoded is an object
-    if (typeof decoded === 'string' || !decoded) {
+
+    if (typeof decoded === "string" || !decoded) {
       return res.status(401).json({ error: "Invalid token" });
     }
 
@@ -40,7 +39,34 @@ export async function requireAuth(
 
     req.user = user;
     next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+   verifyToken
+   Lightweight middleware — only verifies the JWT from cookie,
+   no DB call. Use on /auth/me where we do the DB call inside
+   the route handler itself.
+──────────────────────────────────────────────────────────── */
+export function verifyToken(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.cookies?.token;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const decoded = jwt.verify(token, env.jwtSecret);
+
+    if (typeof decoded === "string" || !decoded) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+
+    req.user = decoded as AuthJwtPayload;
+    next();
+  } catch {
+    return res.status(401).json({ success: false, message: "Token expired" });
   }
 }

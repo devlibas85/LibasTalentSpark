@@ -12,6 +12,8 @@ function required(name: string): string {
 
 export const env = {
   port: Number(process.env.PORT) || 4000,
+  nodeEnv: process.env.NODE_ENV || "development",
+
   azureClientId: required("AZURE_CLIENT_ID"),
   azureTenantId: required("AZURE_TENANT_ID"),
   azureClientSecret: required("AZURE_CLIENT_SECRET"),
@@ -19,4 +21,6 @@ export const env = {
   frontendUrl: required("FRONTEND_URL"),
   mongoUri: required("MONGO_URI"),
   backendUrl: required("BACKEND_URL"),
+  smtpUser: required("SMTP_USER"),
+  smtpPass: required("SMTP_PASS"),
 };
