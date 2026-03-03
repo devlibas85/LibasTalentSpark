@@ -57,7 +57,7 @@ export default function AuthSuccess() {
         // Hydrate Redux
         dispatch(
           setAuth({
-            token,
+            
             name: decoded.name,
             email: decoded.email,
             role: roleMap[decoded.role],
