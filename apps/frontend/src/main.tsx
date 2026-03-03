@@ -12,8 +12,14 @@ import "./index.css";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <BrowserRouter>
+<PersistGate
+  loading={
+    <div className="min-h-screen flex items-center justify-center">
+      Loading session...
+    </div>
+  }
+  persistor={persistor}
+>        <BrowserRouter>
          <Toaster richColors position="top-right" />
           <App />
         </BrowserRouter>
