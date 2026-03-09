@@ -353,13 +353,17 @@ router.get("/me", async (req: Request, res: Response) => {
 /* POST /auth/logout — clear the cookie           */
 /* ────────────────────────────────────────────── */
 
-router.post("/logout", (_req: Request, res: Response) => {
+router.post("/logout", (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: env.nodeEnv === "production",
     sameSite: "strict",
+    secure: false,
   });
-  return res.json({ success: true });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
 });
 
 export default router;

@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-// ✅ Lowercase to match DashboardLayout, Dashboard, and route role props
 type Role = "hr" | "employee";
 
 interface AuthState {
@@ -26,14 +25,12 @@ const authSlice = createSlice({
       action: PayloadAction<{
         name: string;
         email: string;
-        // ✅ Accept uppercase from backend, normalize to lowercase
         role: "HR" | "EMPLOYEE" | "hr" | "employee";
       }>,
     ) => {
       state.isAuthenticated = true;
       state.name = action.payload.name;
       state.email = action.payload.email;
-      // ✅ Always store lowercase so all components agree
       state.role = action.payload.role.toLowerCase() as Role;
     },
     logout: (state) => {
