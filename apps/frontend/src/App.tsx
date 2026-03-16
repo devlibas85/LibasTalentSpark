@@ -155,7 +155,7 @@ function App() {
         <Route
           path="/browse-jobs"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <BrowseJobs />
             </DashboardLayout>
           }
@@ -164,17 +164,16 @@ function App() {
         <Route
           path="/my-referrals"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <MyReferrals />
             </DashboardLayout>
           }
         />
 
-        {/* ✅ Fixed: this was outside <ProtectedRoute> in your original — moved inside */}
         <Route
           path="/my-referrals/:id"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <MyReferralDetails />
             </DashboardLayout>
           }

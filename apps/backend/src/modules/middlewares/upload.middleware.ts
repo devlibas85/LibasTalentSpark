@@ -12,14 +12,14 @@ const ensureDirectoryExists = (dirPath: string) => {
 
 // Define all upload directories
 const UPLOAD_DIRECTORIES = {
-  AVATARS: path.join(process.cwd(), "src", "uploads", "avatars"),
-  JD: path.join(process.cwd(), "src", "uploads", "jd"),
-  RESUMES: path.join(process.cwd(), "src", "uploads", "resumes"),
-  MEDIA: path.join(process.cwd(), "src", "uploads", "media"),
+  AVATARS: path.join(process.cwd(), "uploads", "avatars"),
+  JD: path.join(process.cwd(), "uploads", "jd"),
+  RESUMES: path.join(process.cwd(), "uploads", "resumes"),
+  MEDIA: path.join(process.cwd(), "uploads", "media"),
 };
 
 // Create all directories on initialization
-Object.values(UPLOAD_DIRECTORIES).forEach(dir => {
+Object.values(UPLOAD_DIRECTORIES).forEach((dir) => {
   ensureDirectoryExists(dir);
 });
 
@@ -31,10 +31,10 @@ const createStorage = (uploadDir: string) => {
       cb(null, uploadDir);
     },
     filename: (_req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
       const nameWithoutExt = path.basename(file.originalname, ext);
-      const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '_');
+      const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, "_");
       cb(null, `${sanitizedName}-${uniqueSuffix}${ext}`);
     },
   });
@@ -44,73 +44,102 @@ const createStorage = (uploadDir: string) => {
 
 const FileFilters = {
   // Avatar: Images only
-  avatar: (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  avatar: (
+    _req: any,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback,
+  ) => {
     const allowedMimes = [
-      'image/jpeg',
-      'image/jpg', 
-      'image/png',
-      'image/gif',
-      'image/webp'
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
     ];
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed for avatars'));
+      cb(
+        new Error(
+          "Only image files (JPEG, PNG, GIF, WebP) are allowed for avatars",
+        ),
+      );
     }
   },
 
   // Job Descriptions: PDF only
   jd: (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (file.mimetype === 'application/pdf') {
+    if (file.mimetype === "application/pdf") {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files allowed for job descriptions'));
+      cb(new Error("Only PDF files allowed for job descriptions"));
     }
   },
 
   // Resumes: PDF and DOC/DOCX
-  resume: (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  resume: (
+    _req: any,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback,
+  ) => {
     const allowedMimes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // .docx
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
     ];
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF, DOC, and DOCX files allowed for resumes'));
+      cb(new Error("Only PDF, DOC, and DOCX files allowed for resumes"));
     }
   },
 
   // Media: All common file types
-  media: (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  media: (
+    _req: any,
+    file: Express.Multer.File,
+    cb: multer.FileFilterCallback,
+  ) => {
     const allowedMimes = [
       // Images
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "image/svg+xml",
       // Documents
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain',
-      'text/csv',
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "text/plain",
+      "text/csv",
       // Videos
-      'video/mp4', 'video/mpeg', 'video/quicktime',
+      "video/mp4",
+      "video/mpeg",
+      "video/quicktime",
       // Audio
-      'audio/mpeg', 'audio/wav', 'audio/aac'
+      "audio/mpeg",
+      "audio/wav",
+      "audio/aac",
     ];
-    
+
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Unsupported file type. Allowed: images, documents, videos, audio'));
+      cb(
+        new Error(
+          "Unsupported file type. Allowed: images, documents, videos, audio",
+        ),
+      );
     }
-  }
+  },
 };
 
 // ================ Upload Configuration Objects ================
@@ -142,7 +171,7 @@ export const uploadMedia = multer({
 // ================ Additional Convenience Functions ================
 
 // Single file upload with dynamic type
-export const uploadSingle = (type: 'avatar' | 'jd' | 'resume' | 'media') => {
+export const uploadSingle = (type: "avatar" | "jd" | "resume" | "media") => {
   const configs = {
     avatar: uploadAvatar,
     jd: uploadJD,
@@ -153,7 +182,10 @@ export const uploadSingle = (type: 'avatar' | 'jd' | 'resume' | 'media') => {
 };
 
 // Multiple files upload with dynamic type
-export const uploadMultiple = (type: 'avatar' | 'jd' | 'resume' | 'media', maxCount = 10) => {
+export const uploadMultiple = (
+  type: "avatar" | "jd" | "resume" | "media",
+  maxCount = 10,
+) => {
   const configs = {
     avatar: uploadAvatar,
     jd: uploadJD,
@@ -179,11 +211,11 @@ export default {
   uploadResume,
   uploadMedia,
   uploadAny,
-  
+
   // Convenience functions
   uploadSingle,
   uploadMultiple,
-  
+
   // Constants
   UPLOAD_DIRECTORIES,
   FileFilters,

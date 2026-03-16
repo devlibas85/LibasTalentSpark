@@ -164,14 +164,14 @@ export const LibasSidebar = ({
       icon: Search,
       label: "Browse Jobs",
       path: "/browse-jobs",
-      roles: ["employee"],
+      roles: ["employee", "hr"],
     },
 
     {
       icon: UserPlus,
       label: "My Referrals",
       path: "/my-referrals",
-      roles: ["employee"],
+      roles: ["employee", "hr"],
     },
 
     // Common bottom items
@@ -271,9 +271,6 @@ export const LibasSidebar = ({
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-foreground leading-tight">
                       Libas TalentSpark
-                    </span>
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {currentRole} Portal
                     </span>
                   </div>
                 </motion.div>

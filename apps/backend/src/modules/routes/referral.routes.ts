@@ -23,6 +23,9 @@ router.post(
       notes,
       jobId,
     } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: "Resume file is required" });
+    }
 
     //  Create referral immediately
     const referral = await Referral.create({
@@ -33,7 +36,7 @@ router.post(
       notes,
       job: jobId,
       referredBy: req.user._id,
-      resume: req.file.path,
+      resume: `uploads/resumes/${req.file.filename}`,
       actionHistory: [
         {
           action: "submitted",
@@ -42,21 +45,18 @@ router.post(
       ],
     });
 
-    
     res.status(201).json(referral);
 
     //   AI call runs AFTER response
     setImmediate(() => {
-  triggerAIAsync({
-    referralId: referral._id.toString(),
-    jobId,
-    resumePath: req.file.path,
-  });
-});
-
-  }
+      triggerAIAsync({
+        referralId: referral._id.toString(),
+        jobId,
+        resumePath: `uploads/resumes/${req.file.filename}`,
+      });
+    });
+  },
 );
-
 
 /**
  * GET /api/referrals
@@ -69,11 +69,11 @@ router.get("/", requireAuth, async (req: Request, res) => {
     // if (req.user.role !== "admin" && req.user.role !== "hr") {
     //   return res.status(403).json({ error: "Forbidden" });
     // }
-    
+
     const referrals = await Referral.find({ deleted: false })
       .populate("job", "title location")
       .populate("referredBy", "name email")
-       .populate("actionHistory.actionBy", "name email")
+      .populate("actionHistory.actionBy", "name email")
       .sort({ createdAt: -1 });
 
     res.json(referrals);
@@ -101,9 +101,7 @@ router.get("/my-referrals", requireAuth, async (req: Request, res) => {
     console.error("❌ Failed to fetch user referrals:", error);
     res.status(500).json({ error: "Failed to fetch referrals" });
   }
-}
-
-);
+});
 // Add action to referral (HR actions)
 router.post("/:id/actions", requireAuth, async (req: any, res) => {
   try {
@@ -114,7 +112,7 @@ router.post("/:id/actions", requireAuth, async (req: any, res) => {
     // Validate action
     const validActions = [
       "reviewed",
-      "interview_scheduled", 
+      "interview_scheduled",
       "rejected",
       "hired",
     ];

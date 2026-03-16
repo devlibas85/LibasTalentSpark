@@ -64,7 +64,7 @@ router.post(
       };
 
       if (req.file) {
-        jobData.jdPdf = req.file.path;
+        jobData.jdPdf = `uploads/jd/${req.file.filename}`;
       }
 
       const job = await Job.create(jobData);
@@ -160,7 +160,7 @@ router.put(
 
       // Update JD if new file uploaded
       if (req.file) {
-        job.jdPdf = req.file.path;
+        job.jdPdf = `uploads/jd/${req.file.filename}`;
       }
 
       // Check JD requirement for published jobs
