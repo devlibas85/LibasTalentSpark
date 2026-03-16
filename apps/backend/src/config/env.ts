@@ -14,13 +14,31 @@ export const env = {
   port: Number(process.env.PORT) || 4000,
   nodeEnv: process.env.NODE_ENV || "development",
 
+  // Azure SSO
   azureClientId: required("AZURE_CLIENT_ID"),
   azureTenantId: required("AZURE_TENANT_ID"),
   azureClientSecret: required("AZURE_CLIENT_SECRET"),
+
+  // Microsoft Graph Email
+  tenantId: required("TENANT_ID"),
+  clientId: required("CLIENT_ID"),
+  clientSecret: required("CLIENT_SECRET"),
+  emailSender: required("EMAIL_SENDER"),
+
+  // Auth
   jwtSecret: required("JWT_SECRET"),
+
+  // URLs
   frontendUrl: required("FRONTEND_URL"),
-  mongoUri: required("MONGO_URI"),
   backendUrl: required("BACKEND_URL"),
+
+  // Database
+  mongoUri: required("MONGO_URI"),
+
+  // SMTP (fallback)
   smtpUser: required("SMTP_USER"),
   smtpPass: required("SMTP_PASS"),
+
+  // AI service
+  aiServiceUrl: required("AI_SERVICE_URL"),
 };

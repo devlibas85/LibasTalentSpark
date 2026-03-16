@@ -19,7 +19,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://172.16.21.214:4173",
-  "https://libas-talent-spark.vercel.app", // ✅ removed leading space
+  "https://libas-talent-spark.vercel.app",
 ];
 
 app.use(
@@ -42,7 +42,7 @@ app.use(
 app.use(express.json());
 
 // ===== COOKIE PARSER =====
-app.use(cookieParser()); // ✅ must be before routes so req.cookies is populated
+app.use(cookieParser());
 
 // ===== STATIC FILES =====
 app.use("/uploads", express.static(path.join(process.cwd(), "src", "uploads")));
