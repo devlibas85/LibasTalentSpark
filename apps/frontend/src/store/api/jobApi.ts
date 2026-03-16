@@ -17,7 +17,6 @@ export const jobApi = createApi({
   }),
   tagTypes: ["Job"],
   endpoints: (builder) => ({
-
     //  CREATE JOB
     createJob: builder.mutation<Job, FormData>({
       query: (data) => ({
@@ -59,10 +58,7 @@ export const jobApi = createApi({
         url: `/jobs/${id}/status`,
         method: "PATCH",
       }),
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Job", id },
-        "Job",
-      ],
+      invalidatesTags: (_result, _error, id) => [{ type: "Job", id }, "Job"],
     }),
 
     //  DELETE JOB
@@ -73,7 +69,14 @@ export const jobApi = createApi({
       }),
       invalidatesTags: ["Job"],
     }),
-
+    // CLOSE JOB (FINAL)
+    closeJob: builder.mutation<Job, string>({
+      query: (id) => ({
+        url: `/jobs/${id}/close`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, id) => [{ type: "Job", id }, "Job"],
+    }),
   }),
 });
 
@@ -84,4 +87,5 @@ export const {
   useUpdateJobMutation,
   useToggleJobStatusMutation,
   useDeleteJobMutation,
+  useCloseJobMutation,
 } = jobApi;

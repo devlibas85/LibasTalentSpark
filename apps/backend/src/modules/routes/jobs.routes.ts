@@ -27,9 +27,7 @@ router.post(
         status,
       } = req.body;
 
-      const skills = req.body.skills
-        ? JSON.parse(req.body.skills)
-        : [];
+      const skills = req.body.skills ? JSON.parse(req.body.skills) : [];
 
       if (!title || !department || !location || !description) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -76,10 +74,8 @@ router.post(
       console.error("❌ Create job failed:", error);
       return res.status(500).json({ error: "Failed to create job" });
     }
-  }
+  },
 );
-
-
 
 router.get("/", async (_req, res) => {
   const jobs = await Job.find().populate("createdBy", "name email");
@@ -89,12 +85,15 @@ router.get("/", async (_req, res) => {
 // GET single job by ID
 router.get("/:id", async (req: Request, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate("createdBy", "name email");
-    
+    const job = await Job.findById(req.params.id).populate(
+      "createdBy",
+      "name email",
+    );
+
     if (!job) {
       return res.status(404).json({ error: "Job not found" });
     }
-    
+
     return res.json(job);
   } catch (error) {
     console.error("❌ Get job failed:", error);
@@ -110,7 +109,7 @@ router.put(
   async (req: Request, res) => {
     try {
       const job = await Job.findById(req.params.id);
-      
+
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
@@ -137,7 +136,8 @@ router.put(
       // Track changes for edit history
       const changes: any = {};
       if (title !== job.title) changes.title = { old: job.title, new: title };
-      if (department !== job.department) changes.department = { old: job.department, new: department };
+      if (department !== job.department)
+        changes.department = { old: job.department, new: department };
       // ... add more field tracking as needed
 
       // Update fields
@@ -151,7 +151,8 @@ router.put(
       if (openings !== undefined) job.openings = openings;
       if (deadline !== undefined) job.deadline = deadline;
       if (description) job.description = description;
-      if (responsibilities !== undefined) job.responsibilities = responsibilities;
+      if (responsibilities !== undefined)
+        job.responsibilities = responsibilities;
       if (requirements !== undefined) job.requirements = requirements;
       if (skills) job.skills = skills;
       if (benefits !== undefined) job.benefits = benefits;
@@ -185,14 +186,14 @@ router.put(
       console.error("❌ Update job failed:", error);
       return res.status(500).json({ error: "Failed to update job" });
     }
-  }
+  },
 );
 
 // TOGGLE STATUS (pause/activate)
 router.patch("/:id/status", requireAuth, async (req: Request, res) => {
   try {
     const job = await Job.findById(req.params.id);
-    
+
     if (!job) {
       return res.status(404).json({ error: "Job not found" });
     }
@@ -208,6 +209,8 @@ router.patch("/:id/status", requireAuth, async (req: Request, res) => {
         });
       }
       job.status = "published";
+    } else if (job.status === "closed") {
+      job.status = "published";
     }
 
     await job.save();
@@ -222,7 +225,7 @@ router.patch("/:id/status", requireAuth, async (req: Request, res) => {
 router.delete("/:id", requireAuth, async (req: Request, res) => {
   try {
     const job = await Job.findById(req.params.id);
-    
+
     if (!job) {
       return res.status(404).json({ error: "Job not found" });
     }
@@ -241,6 +244,22 @@ router.delete("/:id", requireAuth, async (req: Request, res) => {
     console.error("❌ Delete job failed:", error);
     return res.status(500).json({ error: "Failed to delete job" });
   }
+});
+
+router.patch("/:id/close", requireAuth, async (req, res) => {
+  const job = await Job.findById(req.params.id);
+
+  if (!job) return res.status(404).json({ error: "Job not found" });
+
+  if (job.status === "closed") {
+    return res.status(400).json({ error: "Job already closed" });
+  }
+
+  job.status = "closed";
+
+  await job.save();
+
+  res.json(job);
 });
 
 export default router;
