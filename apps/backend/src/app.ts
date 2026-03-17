@@ -5,7 +5,7 @@ import passport from "passport";
 import session from "express-session";
 import path from "path";
 
-import authRoutes from "./modules/routes/auth.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 import healthRouter from "./modules/health/health.route.js";
 import jobRouter from "./modules/routes/jobs.routes.js";
 import referralRouter from "./modules/routes/referral.routes.js";
