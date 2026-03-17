@@ -9,7 +9,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import healthRouter from "./modules/health/health.route.js";
 import jobRouter from "./modules/routes/jobs.routes.js";
 import referralRouter from "./modules/routes/referral.routes.js";
-import profileRouter from "./modules/routes/profile.routes.js";
+import profileRouter from "./modules/profile/profile.routes.js";
 
 export const app = express();
 

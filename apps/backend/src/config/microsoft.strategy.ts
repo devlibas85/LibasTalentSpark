@@ -27,7 +27,7 @@ passport.use(
       responseMode: "query",
       redirectUrl: "http://localhost:4000/auth/microsoft/callback",
       allowHttpForRedirectUrl: true,
-     scope: ["openid", "profile", "email", "User.Read"],
+      scope: ["openid", "profile", "email", "User.Read"],
       passReqToCallback: false,
     },
     async (
@@ -36,22 +36,19 @@ passport.use(
       profile: unknown,
       _accessToken: string,
       _refreshToken: string,
-      done: (error: Error | null, user?: any) => void
+      done: (error: Error | null, user?: any) => void,
     ) => {
       try {
         const p = profile as MicrosoftProfile;
 
-        const email =
-          p.upn ||
-          p._json?.preferred_username ||
-          p.emails?.[0];
+        const email = p.upn || p._json?.preferred_username || p.emails?.[0];
 
         if (!email || !email.endsWith("@libas.in")) {
           return done(null, false);
         }
         if (!email) {
-  return done(null, false);
-}
+          return done(null, false);
+        }
 
         return done(null, {
           email,
@@ -61,6 +58,6 @@ passport.use(
       } catch (err) {
         return done(err as Error);
       }
-    }
-  )
+    },
+  ),
 );
