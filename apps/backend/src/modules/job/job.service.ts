@@ -138,11 +138,6 @@ export class JobService {
     const updatedJob = await this.jobRepository.updateStatus(id, newStatus);
 
     // Log the status change
-    if (updatedJob) {
-      await this.jobRepository.addEditLog(id, userId, {
-        status: { old: job.status, new: newStatus },
-      });
-    }
 
     return updatedJob;
   }
@@ -160,11 +155,6 @@ export class JobService {
     const updatedJob = await this.jobRepository.updateStatus(id, "closed");
 
     // Log the closure
-    if (updatedJob) {
-      await this.jobRepository.addEditLog(id, userId, {
-        status: { old: job.status, new: "closed" },
-      });
-    }
 
     return updatedJob;
   }
