@@ -30,10 +30,12 @@ export class ReferralRepository {
   }
 
   async findById(id: string): Promise<IReferral | null> {
-    const referral = await Referral.findById(id);
+    const referral = await Referral.findById(id)
+      .populate("job", "title location department")
+      .populate("referredBy", "name email")
+      .populate("actionHistory.actionBy", "name email");
     return referral as unknown as IReferral | null;
   }
-
   async findAll(queryParams: ReferralQueryParams = {}): Promise<IReferral[]> {
     const query: any = { deleted: queryParams.deleted ?? false };
 

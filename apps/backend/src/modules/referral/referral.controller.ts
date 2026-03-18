@@ -2,6 +2,8 @@ import type { Request, Response } from "express";
 import { ReferralService } from "./referral.service.js";
 import type {
   CreateReferralDTO,
+  IReferral,
+  ReferralQueryParams,
   UpdateReferralStatusDTO,
 } from "./referral.interface.js";
 
@@ -49,9 +51,19 @@ export class ReferralController {
     }
   };
 
-  getAllReferrals = async (req: Request, res: Response): Promise<void> => {
+  getAllReferrals = async (req: any, res: Response): Promise<void> => {
     try {
-      const referrals = await this.service.getAllReferrals();
+      const { status, job } = req.query;
+      const queryParams: ReferralQueryParams = {};
+
+      if (status) queryParams.status = status as IReferral["status"];
+      if (job) queryParams.job = job as string;
+
+      const referrals = await this.service.getAllReferrals(
+        req.user?.role,
+        req.user?._id,
+        queryParams,
+      );
       res.json(referrals);
     } catch (error: any) {
       console.error("❌ Failed to fetch all referrals:", error);
@@ -107,6 +119,23 @@ export class ReferralController {
       res
         .status(500)
         .json({ error: error.message || "Failed to update referral" });
+    }
+  };
+
+  getReferralById = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const referral = await this.service.getReferralById(id as string);
+      res.json(referral);
+    } catch (error: any) {
+      console.error("❌ Failed to fetch referral:", error);
+      if (error.message === "Referral not found") {
+        res.status(404).json({ error: "Referral not found" });
+      } else {
+        res
+          .status(500)
+          .json({ error: error.message || "Failed to fetch referral" });
+      }
     }
   };
 }
