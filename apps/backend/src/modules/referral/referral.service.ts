@@ -3,6 +3,7 @@ import type {
   CreateReferralDTO,
   UpdateReferralStatusDTO,
   IReferral,
+  ReferralQueryParams,
 } from "./referral.interface.js";
 import { triggerAIAsync } from "../middlewares/aiServices.js";
 
@@ -32,9 +33,17 @@ export class ReferralService {
     }
   }
 
-  async getAllReferrals(): Promise<IReferral[]> {
+  async getAllReferrals(
+    userRole?: string,
+    userId?: string,
+    queryParams?: ReferralQueryParams,
+  ): Promise<IReferral[]> {
     try {
-      return await this.repository.findAll();
+      // If not admin/hr, only return user's own referrals
+      if (userRole && !["admin", "hr"].includes(userRole) && userId) {
+        return await this.repository.findByUser(userId);
+      }
+      return await this.repository.findAll(queryParams);
     } catch (error: any) {
       throw new Error(`Failed to fetch referrals: ${error.message}`);
     }
