@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import { env } from "../../config/env.js";
-import { User } from "../models/user.Models.js";
-import type { AuthJwtPayload } from "../../types/jwt.js";
+import { env } from "../config/env.js";
+import { User } from "../database/models/user.Models.js";
+import type { AuthJwtPayload } from "../types/jwt.js";
 import type { Request, Response, NextFunction } from "express";
 
 /* ────────────────────────────────────────────────────────────

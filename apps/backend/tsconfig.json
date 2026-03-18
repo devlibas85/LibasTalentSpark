@@ -6,7 +6,7 @@
     /* CRITICAL FIXES START HERE */
     "module": "NodeNext",           // Changed from ESNext
     "moduleResolution": "NodeNext", // Added this line
-    "types": ["node"],              // Removed [] and added "node"
+               // Removed [] and added "node"
     /* CRITICAL FIXES END HERE */
 
     "target": "esnext",

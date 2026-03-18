@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import type { NavigateFunction } from "react-router-dom";
-import type { RootState } from "@/store";
+import {
+  useLocation,
+  useNavigate,
+  type NavigateFunction,
+} from "react-router-dom";
+import { persistor, type RootState } from "@/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { logout } from "@/store/slice/authSlice";
@@ -11,7 +15,6 @@ import {
   Briefcase,
   Users,
   UserPlus,
-
   BarChart3,
   Settings,
   LogOut,
@@ -20,15 +23,13 @@ import {
   ChevronDown,
   Plus,
   FolderKanban,
-  
   UserCircle2,
   Search,
-  
 } from "lucide-react";
+import { clearProfile } from "@/store/slice/profileSlice";
+import { useLogoutMutation } from "@/store/api/authApi";
 
 type Role = "hr" | "employee";
-
-
 
 interface SubMenuItem {
   label: string;
@@ -57,7 +58,6 @@ interface LibasSidebarProps {
   onNavigate?: ((path: string) => void) | NavigateFunction;
 }
 
-
 export const LibasSidebar = ({
   defaultCollapsed = false,
   onNavigate,
@@ -65,16 +65,12 @@ export const LibasSidebar = ({
   userName,
   userEmail,
 }: LibasSidebarProps) => {
-
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [isMobileView, setIsMobileView] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  const [activeItem, setActiveItem] = useState("/dashboard");
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
-
 
   const auth = useSelector((state: RootState) => state.auth);
   const roleFromStore = auth.role as Role | undefined;
@@ -85,7 +81,25 @@ const dispatch = useDispatch();
   const displayName = userName ?? nameFromStore ?? "User";
   const displayEmail = userEmail ?? emailFromStore ?? "user@libas.in";
 
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeItem = location.pathname;
 
+  const [logoutApi] = useLogoutMutation();
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch (e) {
+      console.error(e);
+    }
+
+    dispatch(logout());
+    dispatch(clearProfile());
+    persistor.purge();
+
+    navigate("/login");
+  };
   // Detect mobile view
   useEffect(() => {
     const handleResize = () => {
@@ -150,15 +164,14 @@ const dispatch = useDispatch();
       icon: Search,
       label: "Browse Jobs",
       path: "/browse-jobs",
-      roles: ["employee"],
+      roles: ["employee", "hr"],
     },
-  
-   
+
     {
       icon: UserPlus,
       label: "My Referrals",
       path: "/my-referrals",
-      roles: ["employee"],
+      roles: ["employee", "hr"],
     },
 
     // Common bottom items
@@ -177,9 +190,8 @@ const dispatch = useDispatch();
   ];
 
   const filteredNavItems = navigationItems.filter((item) =>
-    item.roles.includes(currentRole as Role)
+    item.roles.includes(currentRole as Role),
   );
-
 
   const toggleSidebar = () => {
     if (isMobileView) {
@@ -190,18 +202,19 @@ const dispatch = useDispatch();
   };
 
   const handleItemClick = (path: string, hasSubItems: boolean) => {
-    setActiveItem(path);
-    
     if (hasSubItems) {
       setExpandedItems((prev) =>
         prev.includes(path)
           ? prev.filter((item) => item !== path)
-          : [...prev, path]
+          : [...prev, path],
       );
     } else {
       if (onNavigate) {
         onNavigate(path);
+      } else {
+        navigate(path); // fallback
       }
+
       if (isMobileView) {
         setSidebarVisible(false);
       }
@@ -209,10 +222,12 @@ const dispatch = useDispatch();
   };
 
   const handleSubItemClick = (path: string) => {
-    setActiveItem(path);
     if (onNavigate) {
       onNavigate(path);
+    } else {
+      navigate(path);
     }
+
     if (isMobileView) {
       setSidebarVisible(false);
     }
@@ -246,7 +261,7 @@ const dispatch = useDispatch();
                   animate={{ opacity: 1 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0">
                     <img
                       src="/logo.jpg"
                       alt="Libas"
@@ -256,9 +271,6 @@ const dispatch = useDispatch();
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-foreground leading-tight">
                       Libas TalentSpark
-                    </span>
-                    <span className="text-xs text-muted-foreground capitalize">
-                      {currentRole} Portal
                     </span>
                   </div>
                 </motion.div>
@@ -306,7 +318,7 @@ const dispatch = useDispatch();
                     >
                       <Icon
                         size={20}
-                        className={collapsed && !isMobileView ? "" : "flex-shrink-0"}
+                        className={collapsed && !isMobileView ? "" : "shrink-0"}
                       />
                       {(!collapsed || isMobileView) && (
                         <>
@@ -342,7 +354,9 @@ const dispatch = useDispatch();
                               return (
                                 <button
                                   key={subItem.path}
-                                  onClick={() => handleSubItemClick(subItem.path)}
+                                  onClick={() =>
+                                    handleSubItemClick(subItem.path)
+                                  }
                                   className={`
                                     w-full flex items-center gap-2 px-3 py-2 rounded-lg
                                     text-sm transition-all
@@ -354,7 +368,9 @@ const dispatch = useDispatch();
                                   `}
                                 >
                                   {SubIcon && <SubIcon size={16} />}
-                                  <span className="text-left">{subItem.label}</span>
+                                  <span className="text-left">
+                                    {subItem.label}
+                                  </span>
                                 </button>
                               );
                             })}
@@ -370,8 +386,7 @@ const dispatch = useDispatch();
             <div className="border-t border-border p-3">
               {/* Logout button */}
               <button
-               onClick={() => dispatch(logout())}
-
+                onClick={handleLogout}
                 className={`
                   w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
                   text-sm font-medium text-muted-foreground
@@ -381,12 +396,12 @@ const dispatch = useDispatch();
                   ${collapsed && !isMobileView ? "justify-center" : ""}
                 `}
               >
-                <LogOut size={20} className="flex-shrink-0" />
+                <LogOut size={20} className="shrink-0" />
                 {(!collapsed || isMobileView) && <span>Logout</span>}
               </button>
 
               {/* User info */}
-                    {(!collapsed || isMobileView) && (
+              {(!collapsed || isMobileView) && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -395,20 +410,20 @@ const dispatch = useDispatch();
                     bg-primary/5 border border-primary/10
                   "
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <span className="text-sm font-semibold text-primary uppercase">
-                     {displayName?.charAt(0) ?? "U"}
+                      {displayName?.charAt(0) ?? "U"}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">
-                     {displayName}
+                      {displayName}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                       {displayEmail}
+                      {displayEmail}
                     </p>
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary mt-1">
-   {currentRole?.toUpperCase()}
+                      {currentRole?.toUpperCase()}
                     </span>
                   </div>
                 </motion.div>

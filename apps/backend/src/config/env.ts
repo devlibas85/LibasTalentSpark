@@ -1,37 +1,44 @@
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-
-const envPath = path.resolve(__dirname, "../../.env");
-const result = dotenv.config({ path: envPath });
-
-if (result.error) {
-  console.error("❌ Could not load .env from:", envPath);
-  throw new Error("Failed to load environment variables");
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
 }
-
-
 
 export const env = {
-  port: Number(process.env.PORT) || 4001,
-  azureClientId: process.env.AZURE_CLIENT_ID!,
-  azureTenantId: process.env.AZURE_TENANT_ID!,
-  azureClientSecret: process.env.AZURE_CLIENT_SECRET!,
-  jwtSecret: process.env.JWT_SECRET!,
-  frontendUrl: process.env.FRONTEND_URL!,
-   mongoUri: process.env.MONGO_URI!,
-   backedUrl:process.env.BACKEND_URL!,
+  port: Number(process.env.PORT) || 4000,
+  nodeEnv: process.env.NODE_ENV || "development",
+
+  // Azure SSO
+  azureClientId: required("AZURE_CLIENT_ID"),
+  azureTenantId: required("AZURE_TENANT_ID"),
+  azureClientSecret: required("AZURE_CLIENT_SECRET"),
+
+  // Microsoft Graph Email
+  tenantId: required("TENANT_ID"),
+  clientId: required("CLIENT_ID"),
+  clientSecret: required("CLIENT_SECRET"),
+  emailSender: required("EMAIL_SENDER"),
+
+  // Auth
+  jwtSecret: required("JWT_SECRET"),
+
+  // URLs
+  frontendUrl: required("FRONTEND_URL"),
+  backendUrl: required("BACKEND_URL"),
+
+  // Database
+  mongoUri: required("MONGO_URI"),
+
+  // SMTP (fallback)
+  smtpUser: required("SMTP_USER"),
+  smtpPass: required("SMTP_PASS"),
+
+  // AI service
+  aiServiceUrl: required("AI_SERVICE_URL"),
 };
-
-// Validate required vars
-if (!env.azureClientId || !env.azureTenantId || !env.azureClientSecret || !env.jwtSecret ||   !env.mongoUri) {
-  console.error("❌ Missing required environment variables in .env file");
-  console.error("Please check your .env file at:", envPath);
-  throw new Error("Missing required environment variables");
-}
-
-console.log("✅ All environment variables validated");

@@ -25,7 +25,6 @@ import ReportsAnalytics from "./pages/hr/ReportAnalysis";
 
 // Employee Pages
 import BrowseJobs from "./pages/employee/BrowseJobs";
-
 import MyReferrals from "./pages/employee/MyRefrals";
 import { CandidateDetails } from "./pages/hr/candidatePipeline/CandidateDetails";
 import { MyReferralDetails } from "./pages/employee/MyRefralsDetails";
@@ -34,11 +33,15 @@ import EditJob from "./pages/hr/jobs/editJob";
 
 function App() {
   const role = useSelector((state: RootState) => state.auth.role);
-  console.debug("🧠 ROLE FROM REDUX IN APP:", role);
 
   useEffect(() => {
     getHealth().then((res) => console.debug("health:", res));
   }, []);
+
+  // ✅ ProtectedRoute handles the loading spinner while /me is in-flight.
+  // By the time any child route renders, role will be set.
+  // We still guard here as a safety net so DashboardLayout never gets null.
+  const safeRole = role ?? "employee";
 
   return (
     <Routes>
@@ -46,12 +49,12 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/auth/success" element={<AuthSuccess />} />
 
-      {/* Protected routes */}
+      {/* Protected routes — ProtectedRoute calls /auth/me and rehydrates Redux */}
       <Route element={<ProtectedRoute />}>
         <Route
           path="/dashboard"
           element={
-            <DashboardLayout role={role!}>
+            <DashboardLayout role={safeRole}>
               <Dashboard />
             </DashboardLayout>
           }
@@ -60,7 +63,7 @@ function App() {
         <Route
           path="/profile"
           element={
-            <DashboardLayout role={role!}>
+            <DashboardLayout role={safeRole}>
               <Profile />
             </DashboardLayout>
           }
@@ -69,7 +72,7 @@ function App() {
         <Route
           path="/settings"
           element={
-            <DashboardLayout role={role!}>
+            <DashboardLayout role={safeRole}>
               <Settings />
             </DashboardLayout>
           }
@@ -93,23 +96,24 @@ function App() {
             </DashboardLayout>
           }
         />
-       <Route
-  path="/jobs/:jobId"
-  element={
-    <DashboardLayout role="hr">
-      <ViewJobDetails />
-    </DashboardLayout>
-  }
-/>
- <Route
-  path="/jobs/edit/:jobId"
-  element={
-    <DashboardLayout role="hr">
-      <EditJob />
-    </DashboardLayout>
-  }
-/>
 
+        <Route
+          path="/jobs/:jobId"
+          element={
+            <DashboardLayout role="hr">
+              <ViewJobDetails />
+            </DashboardLayout>
+          }
+        />
+
+        <Route
+          path="/jobs/edit/:jobId"
+          element={
+            <DashboardLayout role="hr">
+              <EditJob />
+            </DashboardLayout>
+          }
+        />
 
         <Route
           path="/candidates"
@@ -119,15 +123,15 @@ function App() {
             </DashboardLayout>
           }
         />
-        <Route
-  path="/candidates/:id"
-  element={
-    <DashboardLayout role="hr">
-      <CandidateDetails />
-    </DashboardLayout>
-  }
-/>
 
+        <Route
+          path="/candidates/:id"
+          element={
+            <DashboardLayout role="hr">
+              <CandidateDetails />
+            </DashboardLayout>
+          }
+        />
 
         <Route
           path="/referrals-manage"
@@ -151,33 +155,30 @@ function App() {
         <Route
           path="/browse-jobs"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <BrowseJobs />
             </DashboardLayout>
           }
         />
 
-      
-
-      
         <Route
           path="/my-referrals"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <MyReferrals />
             </DashboardLayout>
           }
         />
-      </Route>
-       <Route
+
+        <Route
           path="/my-referrals/:id"
           element={
-            <DashboardLayout role="employee">
+            <DashboardLayout role={safeRole}>
               <MyReferralDetails />
             </DashboardLayout>
           }
         />
-     
+      </Route>
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" replace />} />

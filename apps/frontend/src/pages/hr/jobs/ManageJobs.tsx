@@ -21,6 +21,7 @@ import {
   useGetJobsQuery,
   useToggleJobStatusMutation,
   useDeleteJobMutation,
+  useCloseJobMutation,
 } from "@/store/api/jobApi";
 import { useNavigate } from "react-router-dom";
 
@@ -65,9 +66,10 @@ export default function ManageJobs() {
   const [selectedJobs, setSelectedJobs] = useState<string[]>([]);
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [toggleStatus] = useToggleJobStatusMutation();
   const [deleteJob] = useDeleteJobMutation();
+  const [closeJob] = useCloseJobMutation();
 
   const ITEMS_PER_PAGE = 5;
 
@@ -95,6 +97,16 @@ export default function ManageJobs() {
       case "closed":
         return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
     }
+  };
+
+  const handleCloseJob = async (jobId: string) => {
+    try {
+      await closeJob(jobId).unwrap();
+      toast.success("Job closed successfully");
+    } catch (err) {
+      toast.error("Failed to close job");
+    }
+    setShowMenu(null);
   };
 
   /* ===============================
@@ -128,7 +140,7 @@ export default function ManageJobs() {
         const now = new Date();
         const diffMs = now.getTime() - created.getTime();
         const msInDay = 24 * 60 * 60 * 1000;
-        
+
         if (filterFreshness === "24h") {
           matchesFreshness = diffMs <= msInDay;
         } else if (filterFreshness === "7d") {
@@ -147,11 +159,19 @@ export default function ManageJobs() {
         matchesFreshness
       );
     });
-  }, [jobs, searchQuery, filterStatus, filterDepartment, filterJobType, filterExperienceLevel, filterFreshness]);
+  }, [
+    jobs,
+    searchQuery,
+    filterStatus,
+    filterDepartment,
+    filterJobType,
+    filterExperienceLevel,
+    filterFreshness,
+  ]);
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredJobs.length / ITEMS_PER_PAGE)
+    Math.ceil(filteredJobs.length / ITEMS_PER_PAGE),
   );
 
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -162,7 +182,7 @@ export default function ManageJobs() {
 
   const paginatedJobs = filteredJobs.slice(
     (safeCurrentPage - 1) * ITEMS_PER_PAGE,
-    safeCurrentPage * ITEMS_PER_PAGE
+    safeCurrentPage * ITEMS_PER_PAGE,
   );
 
   /* ===============================
@@ -173,7 +193,7 @@ export default function ManageJobs() {
     setSelectedJobs((prev) =>
       prev.includes(jobId)
         ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId]
+        : [...prev, jobId],
     );
   };
 
@@ -264,7 +284,7 @@ export default function ManageJobs() {
     );
   }
   return (
-    <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+    <div className="p-6 space-y-6 max-w-400 mx-auto">
       {/* ================= HEADER ================= */}
       <div className="flex justify-between items-start">
         <div>
@@ -405,7 +425,9 @@ export default function ManageJobs() {
 
           {/* Freshness Filter */}
           <div className="flex items-center">
-            <label className="text-sm mr-3 text-muted-foreground">Freshness</label>
+            <label className="text-sm mr-3 text-muted-foreground">
+              Freshness
+            </label>
             <select
               value={filterFreshness}
               onChange={(e) => setFilterFreshness(e.target.value)}
@@ -488,8 +510,12 @@ export default function ManageJobs() {
               ) : (
                 paginatedJobs.map((job) => {
                   const isActive = job.status === "published";
-                  const createdTime = job.createdAt ? new Date(job.createdAt).getTime() : 0;
-                  const isNew = createdTime > 0 && new Date().getTime() - createdTime <= 24 * 60 * 60 * 1000;
+                  const createdTime = job.createdAt
+                    ? new Date(job.createdAt).getTime()
+                    : 0;
+                  const isNew =
+                    createdTime > 0 &&
+                    new Date().getTime() - createdTime <= 24 * 60 * 60 * 1000;
                   return (
                     <motion.tr
                       key={job._id}
@@ -509,15 +535,17 @@ export default function ManageJobs() {
                       <td className="p-3">
                         <div>
                           <p className="font-medium">{job.title}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <Briefcase className="h-3 w-3" />
-                            {job.jobType}
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Briefcase className="h-3 w-3" />
+                              {job.jobType}
+                            </span>
+                            {isNew && (
+                              <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                                New
                               </span>
-                              {isNew && (
-                                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">New</span>
-                              )}
-                            </div>
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -527,7 +555,7 @@ export default function ManageJobs() {
 
                       <td className="p-3">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                           <span className="text-sm">{job.location}</span>
                         </div>
                       </td>
@@ -548,7 +576,7 @@ export default function ManageJobs() {
                       <td className="p-3">
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            job.status
+                            job.status,
                           )}`}
                         >
                           {uiStatus(job.status)}
@@ -563,7 +591,7 @@ export default function ManageJobs() {
                                 {
                                   month: "short",
                                   day: "numeric",
-                                }
+                                },
                               )
                             : "N/A"}
                         </span>
@@ -573,9 +601,7 @@ export default function ManageJobs() {
                         <div className="relative">
                           <button
                             onClick={() =>
-                              setShowMenu(
-                                showMenu === job._id ? null : job._id
-                              )
+                              setShowMenu(showMenu === job._id ? null : job._id)
                             }
                             className="p-1.5 hover:bg-muted rounded-lg transition-colors"
                           >
@@ -622,6 +648,15 @@ export default function ManageJobs() {
                                     </>
                                   )}
                                 </button>
+                                {job.status !== "closed" && (
+                                  <button
+                                    onClick={() => handleCloseJob(job._id)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left"
+                                  >
+                                    <Calendar className="h-4 w-4" />
+                                    Close Job
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => handleDuplicateJob(job._id)}
                                   className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors text-left"
@@ -640,7 +675,7 @@ export default function ManageJobs() {
                               </motion.div>
                             )}
                           </AnimatePresence>
-                        </div>  
+                        </div>
                       </td>
                     </motion.tr>
                   );
@@ -655,20 +690,18 @@ export default function ManageJobs() {
       {filteredJobs.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-           Showing {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–
-{Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredJobs.length)} of{" "}
-{filteredJobs.length} jobs
-
+            Showing {(safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}–
+            {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredJobs.length)} of{" "}
+            {filteredJobs.length} jobs
           </p>
 
           <div className="flex gap-2">
-           <button
-  disabled={safeCurrentPage === 1}
-  onClick={() => setCurrentPage((p) => p - 1)}
->
-  Previous
-</button>
-
+            <button
+              disabled={safeCurrentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Previous
+            </button>
 
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
               let pageNum;
@@ -686,8 +719,7 @@ export default function ManageJobs() {
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-4 py-2 rounded-lg transition-colors ${
-                  safeCurrentPage === pageNum
-
+                    safeCurrentPage === pageNum
                       ? "bg-primary text-primary-foreground"
                       : "border hover:bg-muted"
                   }`}
@@ -697,13 +729,12 @@ export default function ManageJobs() {
               );
             })}
 
-           <button
-  disabled={safeCurrentPage === totalPages}
-  onClick={() => setCurrentPage((p) => p + 1)}
->
-  Next
-</button>
-
+            <button
+              disabled={safeCurrentPage === totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
