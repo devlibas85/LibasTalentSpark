@@ -9,20 +9,25 @@ import type {
 
 export class ReferralRepository {
   async create(referralData: CreateReferralDTO): Promise<IReferral> {
+    console.log("🔍 referralData:", {
+      jobId: referralData.jobId,
+      userId: referralData.userId,
+      jobIdType: typeof referralData.jobId,
+      userIdType: typeof referralData.userId,
+    });
     const referral = await Referral.create({
       candidateName: referralData.candidateName,
       candidateEmail: referralData.candidateEmail,
       candidatePhone: referralData.candidatePhone,
       relationship: referralData.relationship,
       notes: referralData.notes || null,
-      job: new Types.ObjectId(referralData.jobId),
-      referredBy: new Types.ObjectId(referralData.userId),
+      job: new Types.ObjectId(referralData.jobId.toString()),
+      referredBy: new Types.ObjectId(referralData.userId.toString()),
       resume: referralData.resumePath,
       actionHistory: [
         {
           action: "submitted",
           actionBy: new Types.ObjectId(referralData.userId),
-          actionAt: new Date(),
         },
       ],
     });
@@ -50,7 +55,7 @@ export class ReferralRepository {
     }
 
     const referrals = await Referral.find(query)
-      .populate("job", "title location department")
+      .populate("job", "title location")
       .populate("referredBy", "name email")
       .populate("actionHistory.actionBy", "name email")
       .sort({ createdAt: -1 });
@@ -63,7 +68,7 @@ export class ReferralRepository {
       referredBy: new Types.ObjectId(userId),
       deleted: false,
     })
-      .populate("job", "title department location")
+      .populate("job", "title  location")
       .sort({ createdAt: -1 });
 
     return referrals as unknown as IReferral[];
@@ -103,7 +108,7 @@ export class ReferralRepository {
     await referral.save();
 
     const updatedReferral = await Referral.findById(id)
-      .populate("job", "title location department")
+      .populate("job", "title  department")
       .populate("referredBy", "name email")
       .populate("actionHistory.actionBy", "name email");
 

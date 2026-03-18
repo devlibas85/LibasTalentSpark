@@ -36,8 +36,8 @@ export class ReferralController {
         candidatePhone,
         relationship,
         notes,
-        jobId,
-        userId: req.user._id,
+        jobId: typeof jobId === "object" ? jobId._id?.toString() : jobId,
+        userId: req.user._id.toString(),
         resumePath: `uploads/resumes/${req.file.filename}`,
       };
 
@@ -106,14 +106,22 @@ export class ReferralController {
       const updateData: UpdateReferralStatusDTO = {
         action,
         remarks,
-        userId: req.user._id,
+        userId: req.user._id.toString(),
       };
 
-      const updatedReferral = await this.service.updateReferralStatus(
-        id,
-        updateData,
-      );
-      res.json(updatedReferral);
+      try {
+        const updatedReferral = await this.service.updateReferralStatus(
+          id,
+          updateData,
+        );
+        res.json(updatedReferral);
+      } catch (error: any) {
+        if (error.message.includes("not found")) {
+          res.status(404).json({ error: "Referral not found" });
+          return;
+        }
+        throw error; // re-throw to outer catch
+      }
     } catch (error: any) {
       console.error("❌ Failed to update referral:", error);
       res

@@ -21,11 +21,7 @@ export class JobController {
         req.file,
       );
 
-      return res.status(201).json({
-        success: true,
-        message: "Job created successfully",
-        data: job,
-      });
+      return res.status(201).json(job);
     } catch (error: any) {
       console.error("❌ Create job failed:", error);
       const status = error.message.includes("required") ? 400 : 500;
@@ -51,11 +47,7 @@ export class JobController {
 
       const jobs = await this.jobService.getAllJobs(filters);
 
-      return res.json({
-        success: true,
-        count: jobs.length,
-        data: jobs,
-      });
+      return res.json(jobs);
     } catch (error: any) {
       console.error("❌ Get jobs failed:", error);
       return res.status(500).json({
@@ -69,10 +61,7 @@ export class JobController {
     try {
       const job = await this.jobService.getJobById(req.params.id as string);
 
-      return res.json({
-        success: true,
-        data: job,
-      });
+      return res.json(job);
     } catch (error: any) {
       console.error("❌ Get job failed:", error);
       const status = error.message === "Job not found" ? 404 : 500;
@@ -96,11 +85,7 @@ export class JobController {
         req.file,
       );
 
-      return res.json({
-        success: true,
-        message: "Job updated successfully",
-        data: job,
-      });
+      return res.json(job);
     } catch (error: any) {
       console.error("❌ Update job failed:", error);
       const status =
@@ -128,11 +113,7 @@ export class JobController {
         req.user._id.toString(),
       );
 
-      return res.json({
-        success: true,
-        message: "Job status updated successfully",
-        data: job,
-      });
+      return res.json(job);
     } catch (error: any) {
       console.error("❌ Toggle status failed:", error);
       const status =
@@ -160,11 +141,7 @@ export class JobController {
         req.user._id.toString(),
       );
 
-      return res.json({
-        success: true,
-        message: "Job closed successfully",
-        data: job,
-      });
+      return res.json(job);
     } catch (error: any) {
       console.error("❌ Close job failed:", error);
       const status =
@@ -192,10 +169,7 @@ export class JobController {
         req.user._id.toString(),
       );
 
-      return res.json({
-        success: true,
-        message: "Job deleted successfully",
-      });
+      return res.json({ message: "Job deleted successfully" });
     } catch (error: any) {
       console.error("❌ Delete job failed:", error);
       const status = error.message === "Job not found" ? 404 : 500;
