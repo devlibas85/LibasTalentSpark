@@ -42,7 +42,7 @@ export class JobRepository {
   }
 
   async findAll(filters: IJobFilters = {}): Promise<IJob[]> {
-    const query: any = { deleted: false };
+    const query: any = {};
 
     if (filters.status) query.status = filters.status;
     if (filters.department) query.department = filters.department;
@@ -54,9 +54,10 @@ export class JobRepository {
 
     const jobs = await Job.find(query)
       .populate("createdBy", "name email")
-      .sort({ createdAt: -1 })
-      .lean();
 
+      .lean();
+    console.log("🔍 First job _id:", jobs[0]?._id, typeof jobs[0]?._id);
+    console.log("🔍 After convert:", this.convertNullToUndefined(jobs[0])?._id);
     // Convert null values to undefined for each job
     return jobs.map((job) => this.convertNullToUndefined(job)) as IJob[];
   }
@@ -64,7 +65,7 @@ export class JobRepository {
   async findById(id: string): Promise<IJob | null> {
     const job = await Job.findById(id)
       .populate("createdBy", "name email")
-      .populate("editHistory.editedBy", "name email")
+
       .lean();
 
     if (!job) return null;
@@ -212,7 +213,7 @@ export class JobRepository {
   async findPublished(): Promise<IJob[]> {
     const jobs = await Job.find({ status: "published", deleted: false })
       .populate("createdBy", "name email")
-      .sort({ createdAt: -1 })
+
       .lean();
 
     // Convert null values to undefined for each job
@@ -237,14 +238,17 @@ export class JobRepository {
   private convertNullToUndefined(obj: any): any {
     if (obj === null || obj === undefined) return obj;
 
-    // Handle Mongoose document with _doc property
     const source = obj._doc || obj;
-
     const result: any = {};
 
     for (const [key, value] of Object.entries(source)) {
       if (value === null) {
         result[key] = undefined;
+      } else if (
+        typeof value === "object" &&
+        typeof (value as any).toHexString === "function"
+      ) {
+        result[key] = (value as any).toString();
       } else if (Array.isArray(value)) {
         result[key] = value.map((item) =>
           typeof item === "object" && item !== null

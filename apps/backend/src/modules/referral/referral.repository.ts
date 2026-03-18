@@ -9,14 +9,20 @@ import type {
 
 export class ReferralRepository {
   async create(referralData: CreateReferralDTO): Promise<IReferral> {
+    console.log("🔍 referralData:", {
+      jobId: referralData.jobId,
+      userId: referralData.userId,
+      jobIdType: typeof referralData.jobId,
+      userIdType: typeof referralData.userId,
+    });
     const referral = await Referral.create({
       candidateName: referralData.candidateName,
       candidateEmail: referralData.candidateEmail,
       candidatePhone: referralData.candidatePhone,
       relationship: referralData.relationship,
       notes: referralData.notes || null,
-      job: new Types.ObjectId(referralData.jobId),
-      referredBy: new Types.ObjectId(referralData.userId),
+      job: new Types.ObjectId(referralData.jobId.toString()),
+      referredBy: new Types.ObjectId(referralData.userId.toString()),
       resume: referralData.resumePath,
       actionHistory: [
         {

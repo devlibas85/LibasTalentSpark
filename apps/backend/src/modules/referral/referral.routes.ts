@@ -17,8 +17,6 @@ router.post(
 // GET /api/referrals — All referrals (HR/Admin dashboard)
 router.get("/", requireAuth, controller.getAllReferrals);
 
-// GET /api/referrals/my-referrals — Current user's referrals
-// ⚠️ Must be ABOVE /:id routes or Express will treat "my-referrals" as an id
 router.get("/my-referrals", requireAuth, controller.getMyReferrals);
 
 // POST /api/referrals/:id/actions — HR actions
