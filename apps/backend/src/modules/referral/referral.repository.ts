@@ -22,7 +22,6 @@ export class ReferralRepository {
         {
           action: "submitted",
           actionBy: new Types.ObjectId(referralData.userId),
-          actionAt: new Date(),
         },
       ],
     });
@@ -48,7 +47,7 @@ export class ReferralRepository {
     }
 
     const referrals = await Referral.find(query)
-      .populate("job", "title location department")
+      .populate("job", "title location")
       .populate("referredBy", "name email")
       .populate("actionHistory.actionBy", "name email")
       .sort({ createdAt: -1 });
@@ -61,7 +60,7 @@ export class ReferralRepository {
       referredBy: new Types.ObjectId(userId),
       deleted: false,
     })
-      .populate("job", "title department location")
+      .populate("job", "title  location")
       .sort({ createdAt: -1 });
 
     return referrals as unknown as IReferral[];
@@ -101,7 +100,7 @@ export class ReferralRepository {
     await referral.save();
 
     const updatedReferral = await Referral.findById(id)
-      .populate("job", "title location department")
+      .populate("job", "title  department")
       .populate("referredBy", "name email")
       .populate("actionHistory.actionBy", "name email");
 
