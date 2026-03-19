@@ -2,8 +2,14 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Loader2, Mail, Lock, ArrowRight,
-  Eye, EyeOff, ChevronLeft, User,
+  Loader2,
+  Mail,
+  Lock,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  User,
 } from "lucide-react";
 import type { ReactNode, ChangeEvent } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -12,6 +18,7 @@ import {
   useRegisterMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
+  useResetPasswordMutation,
 } from "@/store/api/authApi";
 import { useNavigate } from "react-router-dom";
 import { setAuth } from "@/store/slice/authSlice";
@@ -55,17 +62,23 @@ const Background = () => (
     <div
       className="absolute rounded-full"
       style={{
-        top: "-20%", right: "10%",
-        width: 500, height: 500,
-        background: "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
+        top: "-20%",
+        right: "10%",
+        width: 500,
+        height: 500,
+        background:
+          "radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)",
       }}
     />
     <div
       className="absolute rounded-full"
       style={{
-        bottom: "-20%", left: "5%",
-        width: 400, height: 400,
-        background: "radial-gradient(circle, hsl(var(--primary) / 0.07) 0%, transparent 70%)",
+        bottom: "-20%",
+        left: "5%",
+        width: 400,
+        height: 400,
+        background:
+          "radial-gradient(circle, hsl(var(--primary) / 0.07) 0%, transparent 70%)",
       }}
     />
   </div>
@@ -82,10 +95,20 @@ const MicrosoftLogo = ({ size = 18 }: { size?: number }) => (
 );
 
 // ─── Input ──────────────────────────────────────────────────────────────────────
-const Input = ({ icon: Icon, type = "text", placeholder, value, onChange, rightElement }: InputProps) => (
+const Input = ({
+  icon: Icon,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  rightElement,
+}: InputProps) => (
   <div className="relative flex items-center bg-muted/40 border border-border rounded-[10px] transition-colors focus-within:border-primary/60">
     {Icon && (
-      <Icon size={16} className="absolute left-3.5 text-muted-foreground pointer-events-none" />
+      <Icon
+        size={16}
+        className="absolute left-3.5 text-muted-foreground pointer-events-none"
+      />
     )}
     <input
       type={type}
@@ -94,14 +117,17 @@ const Input = ({ icon: Icon, type = "text", placeholder, value, onChange, rightE
       onChange={onChange}
       className="w-full py-3 pl-10 pr-10 bg-transparent border-none outline-none text-foreground text-sm placeholder:text-muted-foreground/50"
     />
-    {rightElement && (
-      <div className="absolute right-3">{rightElement}</div>
-    )}
+    {rightElement && <div className="absolute right-3">{rightElement}</div>}
   </div>
 );
 
 // ─── Primary Button ─────────────────────────────────────────────────────────────
-const PrimaryButton = ({ children, onClick, disabled, loading }: PrimaryButtonProps) => (
+const PrimaryButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+}: PrimaryButtonProps) => (
   <button
     onClick={onClick}
     disabled={disabled || loading}
@@ -115,10 +141,7 @@ const PrimaryButton = ({ children, onClick, disabled, loading }: PrimaryButtonPr
       shadow-[0_4px_20px_hsl(var(--primary)/0.3)]
     "
   >
-    {loading
-      ? <Loader2 size={16} className="animate-spin" />
-      : children
-    }
+    {loading ? <Loader2 size={16} className="animate-spin" /> : children}
   </button>
 );
 
@@ -211,7 +234,14 @@ const BackButton = ({ onClick }: { onClick: () => void }) => (
 // ─── Password Strength Bar ──────────────────────────────────────────────────────
 const StrengthBar = ({ password }: { password: string }) => {
   if (!password.length) return null;
-  const strength = password.length < 6 ? 1 : password.length < 10 ? 2 : password.length < 14 ? 3 : 4;
+  const strength =
+    password.length < 6
+      ? 1
+      : password.length < 10
+        ? 2
+        : password.length < 14
+          ? 3
+          : 4;
   const colors = ["", "#ef4444", "#f59e0b", "hsl(var(--primary))", "#22c55e"];
   return (
     <div className="flex gap-1">
@@ -219,7 +249,9 @@ const StrengthBar = ({ password }: { password: string }) => {
         <div
           key={i}
           className="flex-1 h-0.75 rounded-full transition-all duration-300"
-          style={{ background: i <= strength ? colors[strength] : "hsl(var(--border))" }}
+          style={{
+            background: i <= strength ? colors[strength] : "hsl(var(--border))",
+          }}
         />
       ))}
     </div>
@@ -227,14 +259,28 @@ const StrengthBar = ({ password }: { password: string }) => {
 };
 
 // ─── LOGIN FORM ─────────────────────────────────────────────────────────────────
+// ─── LOGIN FORM ─────────────────────────────────────────────────────────────────
 function LoginForm({ onSwitchToSignup }: LoginFormProps) {
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [step, setStep] = useState<"email" | "otp" | "password">("email");
+
+  // Login fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
 
-  // ✅ Use isLoading from the mutation hook, not a local loading state
+  // Forgot password fields
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showNewPw, setShowNewPw] = useState(false);
+
   const [login, { isLoading }] = useLoginMutation();
-  // const [msLoading, setMsLoading] = useState(false);
+  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
+  const [resetPassword, { isLoading: isResetting }] =
+    useResetPasswordMutation();
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -247,7 +293,7 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
             name: res.user.name,
             email: res.user.email,
             role: res.user.role,
-          })
+          }),
         );
         navigate("/dashboard");
       }
@@ -256,11 +302,196 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
     }
   };
 
-  // const handleMicrosoftLogin = () => {
-  //   setMsLoading(true);
-  //   window.location.href = "http://localhost:4000/auth/microsoft";
-  // };
+  const handleSendOtp = async () => {
+    try {
+      await sendOtp({ email: forgotEmail }).unwrap();
+      setStep("otp");
+    } catch (err: any) {
+      alert(err?.data?.message || "Failed to send OTP");
+    }
+  };
 
+  const handleVerifyOtp = () => {
+    if (otp.length === 6) setStep("password");
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      await resetPassword({
+        email: forgotEmail,
+        otp,
+        password: newPassword,
+      }).unwrap();
+      alert("Password reset successful! Please sign in.");
+      setMode("login");
+      setStep("email");
+      setForgotEmail("");
+      setOtp("");
+      setNewPassword("");
+      setConfirmPw("");
+    } catch (err: any) {
+      alert(err?.data?.message || "Password reset failed");
+    }
+  };
+
+  const handleForgotPassword = () => {
+    setMode("forgot");
+    setStep("email");
+  };
+
+  const handleBackToLogin = () => {
+    setMode("login");
+    setStep("email");
+    setForgotEmail("");
+    setOtp("");
+    setNewPassword("");
+    setConfirmPw("");
+  };
+
+  const slide = {
+    initial: { opacity: 0, x: 16 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -16 },
+    transition: { duration: 0.18 },
+  };
+
+  // ── Forgot Password Flow ──
+  if (mode === "forgot") {
+    return (
+      <div className="flex flex-col gap-4">
+        <AnimatePresence mode="wait">
+          {/* Step 1: Email */}
+          {step === "email" && (
+            <motion.div
+              key="forgot-email"
+              {...slide}
+              className="flex flex-col gap-3.5"
+            >
+              <BackButton onClick={handleBackToLogin} />
+              <div className="text-center">
+                <p className="text-sm font-semibold text-foreground">
+                  Reset your password
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your email to receive a verification code
+                </p>
+              </div>
+              <Input
+                icon={Mail}
+                type="email"
+                placeholder="name.surname@libas.in"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+              />
+              <PrimaryButton
+                onClick={handleSendOtp}
+                loading={isSendingOtp}
+                disabled={!forgotEmail}
+              >
+                Send verification code <ArrowRight size={15} />
+              </PrimaryButton>
+            </motion.div>
+          )}
+
+          {/* Step 2: OTP */}
+          {step === "otp" && (
+            <motion.div
+              key="forgot-otp"
+              {...slide}
+              className="flex flex-col gap-4"
+            >
+              <BackButton onClick={() => setStep("email")} />
+              <p className="text-center text-sm text-muted-foreground leading-relaxed">
+                We sent a 6-digit code to
+                <br />
+                <span className="text-primary font-semibold">
+                  {forgotEmail}
+                </span>
+              </p>
+              <OtpInput value={otp} onChange={setOtp} />
+              <PrimaryButton
+                onClick={handleVerifyOtp}
+                disabled={otp.length < 6}
+              >
+                Verify code
+              </PrimaryButton>
+              <p className="text-center text-xs text-muted-foreground">
+                Didn't receive it?{" "}
+                <button
+                  onClick={handleSendOtp}
+                  disabled={isSendingOtp}
+                  className="text-primary hover:underline disabled:opacity-50"
+                >
+                  {isSendingOtp ? "Sending…" : "Resend"}
+                </button>
+              </p>
+            </motion.div>
+          )}
+
+          {/* Step 3: New Password */}
+          {step === "password" && (
+            <motion.div
+              key="forgot-password"
+              {...slide}
+              className="flex flex-col gap-3.5"
+            >
+              <BackButton onClick={() => setStep("otp")} />
+              <div className="text-center">
+                <div
+                  className="inline-flex items-center justify-center w-11 h-11 rounded-xl mb-2 border"
+                  style={{
+                    background: "hsl(var(--primary) / 0.12)",
+                    borderColor: "hsl(var(--primary) / 0.3)",
+                  }}
+                >
+                  <Lock size={18} className="text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Set your new password
+                </p>
+              </div>
+              <Input
+                icon={Lock}
+                type={showNewPw ? "text" : "password"}
+                placeholder="New password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                rightElement={
+                  <button
+                    onClick={() => setShowNewPw((p) => !p)}
+                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                  >
+                    {showNewPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                }
+              />
+              <StrengthBar password={newPassword} />
+              <Input
+                icon={Lock}
+                type={showNewPw ? "text" : "password"}
+                placeholder="Confirm new password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+              />
+              <PrimaryButton
+                onClick={handleResetPassword}
+                loading={isResetting}
+                disabled={
+                  !newPassword ||
+                  newPassword !== confirmPw ||
+                  newPassword.length < 6
+                }
+              >
+                Reset password <ArrowRight size={15} />
+              </PrimaryButton>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ── Normal Login Flow ──
   return (
     <div className="flex flex-col gap-4">
       <GhostButton disabled>
@@ -298,13 +529,19 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       />
 
       <div className="flex justify-end -mt-2">
-        <button className="text-xs text-primary/80 hover:text-primary transition-colors">
+        <button
+          className="text-xs text-primary/80 hover:text-primary transition-colors"
+          onClick={handleForgotPassword}
+        >
           Forgot password?
         </button>
       </div>
 
-      {/* ✅ loading={isLoading} from RTK Query — not a stale local state */}
-      <PrimaryButton onClick={handleLogin} loading={isLoading} disabled={!email || !password}>
+      <PrimaryButton
+        onClick={handleLogin}
+        loading={isLoading}
+        disabled={!email || !password}
+      >
         Sign In <ArrowRight size={15} />
       </PrimaryButton>
 
@@ -368,7 +605,7 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             name: res.user.name,
             email: res.user.email,
             role: res.user.role,
-          })
+          }),
         );
         navigate("/dashboard");
       }
@@ -423,7 +660,11 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               onChange={(e) => setEmail(e.target.value)}
             />
             {/* ✅ loading={isSendingOtp} from the sendOtp mutation */}
-            <PrimaryButton onClick={handleSendOTP} loading={isSendingOtp} disabled={!email || !name}>
+            <PrimaryButton
+              onClick={handleSendOTP}
+              loading={isSendingOtp}
+              disabled={!email || !name}
+            >
               Send verification code <ArrowRight size={15} />
             </PrimaryButton>
           </motion.div>
@@ -434,12 +675,17 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
           <motion.div key="otp" {...slide} className="flex flex-col gap-4">
             <BackButton onClick={() => setStep("email")} />
             <p className="text-center text-sm text-muted-foreground leading-relaxed">
-              We sent a 6-digit code to<br />
+              We sent a 6-digit code to
+              <br />
               <span className="text-primary font-semibold">{email}</span>
             </p>
             <OtpInput value={otp} onChange={setOtp} />
             {/* ✅ loading={isVerifyingOtp} from the verifyOtp mutation */}
-            <PrimaryButton onClick={handleVerifyOTP} loading={isVerifyingOtp} disabled={otp.length < 6}>
+            <PrimaryButton
+              onClick={handleVerifyOTP}
+              loading={isVerifyingOtp}
+              disabled={otp.length < 6}
+            >
               Verify code
             </PrimaryButton>
             <p className="text-center text-xs text-muted-foreground">
@@ -458,7 +704,11 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
         {/* ── Step 3: Password ── */}
         {step === "password" && (
-          <motion.div key="password" {...slide} className="flex flex-col gap-3.5">
+          <motion.div
+            key="password"
+            {...slide}
+            className="flex flex-col gap-3.5"
+          >
             <BackButton onClick={() => setStep("otp")} />
             <div className="text-center">
               <div
@@ -470,7 +720,9 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               >
                 <Lock size={18} className="text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">Set a secure password for your account</p>
+              <p className="text-sm text-muted-foreground">
+                Set a secure password for your account
+              </p>
             </div>
             <Input
               icon={Lock}
@@ -499,7 +751,9 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             <PrimaryButton
               onClick={handleRegister}
               loading={isRegistering}
-              disabled={!password || password !== confirmPw || password.length < 6}
+              disabled={
+                !password || password !== confirmPw || password.length < 6
+              }
             >
               Create account <ArrowRight size={15} />
             </PrimaryButton>
@@ -509,7 +763,10 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <button onClick={onSwitchToLogin} className="text-primary font-semibold hover:underline">
+        <button
+          onClick={onSwitchToLogin}
+          className="text-primary font-semibold hover:underline"
+        >
           Sign in
         </button>
       </p>
@@ -535,7 +792,8 @@ export default function AuthPage() {
           <div
             className="inline-flex items-center justify-center w-13 h-13 rounded-[14px] mb-3.5"
             style={{
-              width: 52, height: 52,
+              width: 52,
+              height: 52,
               background: "hsl(var(--primary))",
               boxShadow: "0 8px 32px hsl(var(--primary) / 0.35)",
             }}
@@ -543,15 +801,20 @@ export default function AuthPage() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                fill="white" stroke="white"
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                fill="white"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </div>
           <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-none">
             Libas <span className="text-primary">TalentSpark</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1.5">Your talent, ignited.</p>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Your talent, ignited.
+          </p>
         </motion.div>
 
         {/* Card */}
@@ -560,7 +823,10 @@ export default function AuthPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
           className="bg-card/80 backdrop-blur-xl border border-border rounded-2xl p-7 shadow-2xl"
-          style={{ boxShadow: "0 24px 80px hsl(var(--background) / 0.6), inset 0 1px 0 hsl(var(--border) / 0.5)" }}
+          style={{
+            boxShadow:
+              "0 24px 80px hsl(var(--background) / 0.6), inset 0 1px 0 hsl(var(--border) / 0.5)",
+          }}
         >
           {/* Tab switcher */}
           <div className="flex bg-muted/50 border border-border rounded-[10px] p-1 mb-6">
@@ -570,9 +836,10 @@ export default function AuthPage() {
                 onClick={() => setMode(m)}
                 className={`
                   flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200
-                  ${mode === m
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                  ${
+                    mode === m
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }
                 `}
               >
@@ -590,10 +857,11 @@ export default function AuthPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {mode === "login"
-                ? <LoginForm onSwitchToSignup={() => setMode("signup")} />
-                : <SignupForm onSwitchToLogin={() => setMode("login")} />
-              }
+              {mode === "login" ? (
+                <LoginForm onSwitchToSignup={() => setMode("signup")} />
+              ) : (
+                <SignupForm onSwitchToLogin={() => setMode("login")} />
+              )}
             </motion.div>
           </AnimatePresence>
         </motion.div>
@@ -605,7 +873,8 @@ export default function AuthPage() {
           transition={{ delay: 0.3 }}
           className="text-center mt-5 text-xs text-muted-foreground/60"
         >
-          Only <strong className="text-muted-foreground">@libas.in</strong> accounts are permitted
+          Only <strong className="text-muted-foreground">@libas.in</strong>{" "}
+          accounts are permitted
         </motion.p>
       </div>
     </div>
