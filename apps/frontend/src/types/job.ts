@@ -1,24 +1,24 @@
 // Job Type Definitions matching MongoDB schema
-
+//frontend
 export type JobStatus = "draft" | "published" | "closed";
 
 export type JobType = "Full-time" | "Part-time" | "Contract" | "Internship";
 
-export type ExperienceLevel = 
-  | "Entry-level" 
-  | "Mid-level" 
-  | "Senior-level" 
-  | "Lead" 
+export type ExperienceLevel =
+  | "Entry-level"
+  | "Mid-level"
+  | "Senior-level"
+  | "Lead"
   | "Executive";
 
-export type Department = 
-  | "Engineering" 
-  | "Design" 
-  | "Product" 
-  | "Marketing" 
-  | "Sales" 
-  | "Operations" 
-  | "HR" 
+export type Department =
+  | "Engineering"
+  | "Design"
+  | "Product"
+  | "Marketing"
+  | "Sales"
+  | "Operations"
+  | "HR"
   | "Finance";
 
 export interface Job {

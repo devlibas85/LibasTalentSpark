@@ -243,6 +243,9 @@ export class JobRepository {
     for (const [key, value] of Object.entries(source)) {
       if (value === null) {
         result[key] = undefined;
+      } else if (value instanceof Date) {
+        // ✅ Handle Date objects BEFORE the generic object check
+        result[key] = value;
       } else if (
         typeof value === "object" &&
         typeof (value as any).toHexString === "function"
