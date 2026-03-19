@@ -5,7 +5,7 @@ import type {
   IReferral,
   ReferralQueryParams,
 } from "./referral.interface.js";
-import { triggerAIAsync } from "../middlewares/aiServices.js";
+import { triggerAIAsync } from "../../middlewares/aiServices.js";
 
 export class ReferralService {
   private repository: ReferralRepository;

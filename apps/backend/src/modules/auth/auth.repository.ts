@@ -1,4 +1,7 @@
-import { User, type UserDocument } from "../models/user.Models.js";
+import {
+  User,
+  type UserDocument,
+} from ".././../database/models/user.Models.js";
 
 export class AuthRepository {
   async findUserByEmail(email: string): Promise<UserDocument | null> {

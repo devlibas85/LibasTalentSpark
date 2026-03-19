@@ -4,7 +4,7 @@ import crypto from "crypto";
 import type { Response } from "express";
 
 import { env } from "../../config/env.js";
-import { type UserDocument } from "../models/user.Models.js";
+import { type UserDocument } from "../../database/models/user.Models.js";
 import { AuthRepository } from "./auth.repository.js";
 import { sendEmail } from "../../config/sendEmail.js";
 

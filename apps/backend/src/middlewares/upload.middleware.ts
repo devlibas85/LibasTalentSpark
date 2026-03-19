@@ -1,4 +1,3 @@
-// config/multer.ts
 import multer from "multer";
 import fs from "fs";
 import path from "path";

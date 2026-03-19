@@ -1,4 +1,3 @@
-// middlewares/role.middleware.ts
 import { type Request, type Response, type NextFunction } from "express";
 
 export const requireRole = (allowedRoles: string | string[]) => {

@@ -2,8 +2,8 @@ import express from "express";
 
 import { ReferralController } from "./referral.controller.js";
 
-import { requireAuth } from "../middlewares/requireAuth.middleware.js";
-import { uploadResume } from "../middlewares/upload.middleware.js";
+import { requireAuth } from "../../middlewares/requireAuth.middleware.js";
+import { uploadResume } from "../../middlewares/upload.middleware.js";
 
 const router = express.Router();
 

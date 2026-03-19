@@ -1,4 +1,4 @@
-import { Job } from "../models/jobs.Models.js";
+import { Job } from "../../database/models/jobs.Models.js";
 import type {
   IJob,
   IJobCreateDto,
