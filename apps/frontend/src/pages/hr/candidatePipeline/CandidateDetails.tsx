@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -29,7 +28,11 @@ import {
   History,
   type LucideIcon,
 } from "lucide-react";
-
+interface ReferredBy {
+  _id: string;
+  name: string;
+  email: string;
+}
 // Status configuration
 const statusConfig: Record<
   ReferralStatus,
@@ -99,9 +102,7 @@ const hasEvaluationScores = (ai: Referral["aiEvaluation"]): boolean => {
   if (!ai) return false;
 
   const hasFlatScores =
-    ai.keyword_score != null ||
-    ai.skills_score != null ||
-    ai.exp_score != null;
+    ai.keyword_score != null || ai.skills_score != null || ai.exp_score != null;
 
   const hasNestedScores =
     ai.summary?.score != null || ai.skills?.match_percentage != null;
@@ -136,9 +137,9 @@ export const CandidateDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "timeline" | "notes"
-  >("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "timeline" | "notes">(
+    "overview",
+  );
   const [actionRemarks, setActionRemarks] = useState("");
   const [showExplanation, setShowExplanation] = useState(false);
 
@@ -267,7 +268,7 @@ export const CandidateDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-[1600px] mx-auto p-6">
+      <div className="max-w-400 mx-auto p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -336,23 +337,33 @@ export const CandidateDetails = () => {
                 <div className="flex items-center gap-3">
                   <Mail size={18} className="text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Email</p>
-                    <p className="text-sm font-medium">{referral.candidateEmail}</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      Email
+                    </p>
+                    <p className="text-sm font-medium">
+                      {referral.candidateEmail}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Phone size={18} className="text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
-                    <p className="text-sm font-medium">{referral.candidatePhone}</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      Phone
+                    </p>
+                    <p className="text-sm font-medium">
+                      {referral.candidatePhone}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <MapPin size={18} className="text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Location</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      Location
+                    </p>
                     <p className="text-sm font-medium">
                       {referral.job?.location || "Not Specified"}
                     </p>
@@ -362,13 +373,18 @@ export const CandidateDetails = () => {
                 <div className="flex items-center gap-3">
                   <Calendar size={18} className="text-muted-foreground" />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-0.5">Applied On</p>
+                    <p className="text-xs text-muted-foreground mb-0.5">
+                      Applied On
+                    </p>
                     <p className="text-sm font-medium">
-                      {new Date(referral.createdAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {new Date(referral.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        },
+                      )}
                     </p>
                   </div>
                 </div>
@@ -384,7 +400,11 @@ export const CandidateDetails = () => {
             >
               <div className="flex border-b">
                 {[
-                  { id: "overview" as const, label: "Overview", icon: FileText },
+                  {
+                    id: "overview" as const,
+                    label: "Overview",
+                    icon: FileText,
+                  },
                   { id: "timeline" as const, label: "Timeline", icon: History },
                   { id: "notes" as const, label: "Notes", icon: MessageSquare },
                 ].map((tab) => {
@@ -426,17 +446,25 @@ export const CandidateDetails = () => {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Title</span>
-                          <span className="font-medium">{referral.job?.title || "—"}</span>
+                          <span className="font-medium">
+                            {referral.job?.title || "—"}
+                          </span>
                         </div>
 
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Location</span>
-                          <span className="font-medium">{referral.job?.location || "—"}</span>
+                          <span className="text-muted-foreground">
+                            Location
+                          </span>
+                          <span className="font-medium">
+                            {referral.job?.location || "—"}
+                          </span>
                         </div>
 
                         <div className="flex justify-between col-span-2">
                           <span className="text-muted-foreground">Job ID</span>
-                          <span className="font-mono text-xs">{referral.job?._id || "—"}</span>
+                          <span className="font-mono text-xs">
+                            {referral.job?._id || "—"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -448,22 +476,30 @@ export const CandidateDetails = () => {
                       </h3>
                       <div className="space-y-3 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Referred By</span>
+                          <span className="text-muted-foreground">
+                            Referred By
+                          </span>
                           <span className="font-medium">
-                            {(referral.referredBy as any)?.name || "—"}
+                            {(referral.referredBy as ReferredBy)?.name || "—"}
                           </span>
                         </div>
 
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Referrer Email</span>
+                          <span className="text-muted-foreground">
+                            Referrer Email
+                          </span>
                           <span className="font-medium">
-                            {(referral.referredBy as any)?.email || "—"}
+                            {(referral.referredBy as ReferredBy)?.email || "—"}
                           </span>
                         </div>
 
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Relationship</span>
-                          <span className="font-medium">{referral.relationship || "—"}</span>
+                          <span className="text-muted-foreground">
+                            Relationship
+                          </span>
+                          <span className="font-medium">
+                            {referral.relationship || "—"}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -482,7 +518,9 @@ export const CandidateDetails = () => {
                               <p className="font-medium text-sm">Resume.pdf</p>
                               <p className="text-xs text-muted-foreground">
                                 Uploaded on{" "}
-                                {new Date(referral.createdAt).toLocaleDateString()}
+                                {new Date(
+                                  referral.createdAt,
+                                ).toLocaleDateString()}
                               </p>
                             </div>
                           </div>
@@ -503,7 +541,8 @@ export const CandidateDetails = () => {
                       Action History
                     </h3>
 
-                    {referral.actionHistory && referral.actionHistory.length > 0 ? (
+                    {referral.actionHistory &&
+                    referral.actionHistory.length > 0 ? (
                       <div className="relative space-y-6">
                         {referral.actionHistory.map((action, index) => (
                           <div key={index} className="relative flex gap-4">
@@ -511,7 +550,7 @@ export const CandidateDetails = () => {
                               <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-border" />
                             )}
 
-                            <div className="relative flex-shrink-0">
+                            <div className="relative shrink-0">
                               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                 <Clock size={18} className="text-primary" />
                               </div>
@@ -523,17 +562,22 @@ export const CandidateDetails = () => {
                                   {action.action.replace("_", " ")}
                                 </p>
                                 <p className="text-xs text-muted-foreground mb-2">
-                                  {new Date(action.actionAt).toLocaleDateString("en-US", {
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
+                                  {new Date(action.actionAt).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   Action performed by:{" "}
-                                  {(action.actionBy as any)?.name ||
-                                    (action.actionBy as any)?.email ||
+                                  {(action.actionBy as { name: string })
+                                    ?.name ||
+                                    (action.actionBy as { email: string })
+                                      ?.email ||
                                     "Unknown"}
                                 </p>
                               </div>
@@ -543,7 +587,10 @@ export const CandidateDetails = () => {
                       </div>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        <History size={48} className="mx-auto mb-3 opacity-20" />
+                        <History
+                          size={48}
+                          className="mx-auto mb-3 opacity-20"
+                        />
                         <p>No timeline events yet</p>
                       </div>
                     )}
@@ -559,11 +606,16 @@ export const CandidateDetails = () => {
 
                     {referral.notes ? (
                       <div className="bg-muted/30 rounded-xl p-4 border">
-                        <p className="text-sm whitespace-pre-wrap">{referral.notes}</p>
+                        <p className="text-sm whitespace-pre-wrap">
+                          {referral.notes}
+                        </p>
                       </div>
                     ) : (
                       <div className="text-center py-12 text-muted-foreground">
-                        <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
+                        <MessageSquare
+                          size={48}
+                          className="mx-auto mb-3 opacity-20"
+                        />
                         <p>No notes available</p>
                       </div>
                     )}
@@ -645,8 +697,8 @@ export const CandidateDetails = () => {
                               ats >= 80
                                 ? "bg-green-500"
                                 : ats >= 60
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
                             }`}
                           />
                         </div>
@@ -660,25 +712,33 @@ export const CandidateDetails = () => {
                           {ai.keyword_score != null && (
                             <div className="flex justify-between">
                               <span>Keyword Match</span>
-                              <span className="font-semibold">{ai.keyword_score}%</span>
+                              <span className="font-semibold">
+                                {ai.keyword_score}%
+                              </span>
                             </div>
                           )}
                           {ai.skills_score != null && (
                             <div className="flex justify-between">
                               <span>Skills Match</span>
-                              <span className="font-semibold">{ai.skills_score}%</span>
+                              <span className="font-semibold">
+                                {ai.skills_score}%
+                              </span>
                             </div>
                           )}
                           {ai.exp_score != null && (
                             <div className="flex justify-between">
                               <span>Experience Match</span>
-                              <span className="font-semibold">{ai.exp_score}%</span>
+                              <span className="font-semibold">
+                                {ai.exp_score}%
+                              </span>
                             </div>
                           )}
                           {ai.title_similarity != null && (
                             <div className="flex justify-between">
                               <span>Title Similarity</span>
-                              <span className="font-semibold">{ai.title_similarity}%</span>
+                              <span className="font-semibold">
+                                {ai.title_similarity}%
+                              </span>
                             </div>
                           )}
                         </div>
@@ -692,24 +752,32 @@ export const CandidateDetails = () => {
                           <div className="space-y-2 text-sm border-t pt-4">
                             <div className="flex justify-between">
                               <span>Score</span>
-                              <span className="font-semibold">{ai.summary.score}%</span>
+                              <span className="font-semibold">
+                                {ai.summary.score}%
+                              </span>
                             </div>
                             {ai.summary.verdict && (
                               <div className="flex justify-between">
                                 <span>Verdict</span>
-                                <span className="font-semibold capitalize">{ai.summary.verdict}</span>
+                                <span className="font-semibold capitalize">
+                                  {ai.summary.verdict}
+                                </span>
                               </div>
                             )}
                             {ai.summary.confidence && (
                               <div className="flex justify-between">
                                 <span>Confidence</span>
-                                <span className="font-semibold capitalize">{ai.summary.confidence}</span>
+                                <span className="font-semibold capitalize">
+                                  {ai.summary.confidence}
+                                </span>
                               </div>
                             )}
                             {ai.skills?.match_percentage != null && (
                               <div className="flex justify-between">
                                 <span>Skills Match</span>
-                                <span className="font-semibold">{ai.skills.match_percentage}%</span>
+                                <span className="font-semibold">
+                                  {ai.skills.match_percentage}%
+                                </span>
                               </div>
                             )}
                           </div>
@@ -719,11 +787,15 @@ export const CandidateDetails = () => {
                       <div className="space-y-2 text-sm border-t pt-4">
                         <div className="flex justify-between">
                           <span>Candidate Experience</span>
-                          <span className="font-semibold">{candidateYears} yrs</span>
+                          <span className="font-semibold">
+                            {candidateYears} yrs
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Required Experience</span>
-                          <span className="font-semibold">{requiredYears} yrs</span>
+                          <span className="font-semibold">
+                            {requiredYears} yrs
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Meets Requirement</span>
@@ -772,7 +844,9 @@ export const CandidateDetails = () => {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">None found</p>
+                          <p className="text-xs text-muted-foreground">
+                            None found
+                          </p>
                         )}
                       </div>
 
@@ -795,7 +869,9 @@ export const CandidateDetails = () => {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-xs text-muted-foreground">None 🎉</p>
+                          <p className="text-xs text-muted-foreground">
+                            None 🎉
+                          </p>
                         )}
                       </div>
 
@@ -958,7 +1034,9 @@ export const CandidateDetails = () => {
                       <>
                         <Icon size={24} className={config.color} />
                         <div>
-                          <p className="text-sm text-muted-foreground">Status</p>
+                          <p className="text-sm text-muted-foreground">
+                            Status
+                          </p>
                           <p className={`font-semibold ${config.color}`}>
                             {config.label}
                           </p>

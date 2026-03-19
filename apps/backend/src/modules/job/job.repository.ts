@@ -56,8 +56,7 @@ export class JobRepository {
       .populate("createdBy", "name email")
 
       .lean();
-    console.log("🔍 First job _id:", jobs[0]?._id, typeof jobs[0]?._id);
-    console.log("🔍 After convert:", this.convertNullToUndefined(jobs[0])?._id);
+
     // Convert null values to undefined for each job
     return jobs.map((job) => this.convertNullToUndefined(job)) as IJob[];
   }
