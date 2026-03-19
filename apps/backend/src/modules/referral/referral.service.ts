@@ -40,7 +40,11 @@ export class ReferralService {
   ): Promise<IReferral[]> {
     try {
       // If not admin/hr, only return user's own referrals
-      if (userRole && !["admin", "hr"].includes(userRole) && userId) {
+      if (
+        userRole &&
+        !["admin", "hr"].includes(userRole.toLowerCase()) &&
+        userId
+      ) {
         return await this.repository.findByUser(userId);
       }
       return await this.repository.findAll(queryParams);

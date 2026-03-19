@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export type ReferralStatus =
   | "submitted"
@@ -16,11 +16,13 @@ export type ReferralAction =
 
 export interface ActionHistoryItem {
   action: ReferralAction;
-  actionBy: {
-    _id: string;
-    name?: string;
-    email?: string;
-  } | string;
+  actionBy:
+    | {
+        _id: string;
+        name?: string;
+        email?: string;
+      }
+    | string;
   actionAt: string;
   remarks?: string;
 }
@@ -51,7 +53,6 @@ export interface AIEvaluation {
     overqualified_flag?: boolean;
   };
 
-  // ── Flat / root-level fields (backward-compat & direct AI pipeline output) ─
   keyword_score?: number;
   title_similarity?: number;
   skills_score?: number;
@@ -94,19 +95,21 @@ export interface Referral {
   aiEvaluation?: AIEvaluation;
   deleted: boolean;
   deletedAt?: string;
-  deletedBy?: {
-    _id: string;
-    name?: string;
-    email?: string;
-  } | string;
+  deletedBy?:
+    | {
+        _id: string;
+        name?: string;
+        email?: string;
+      }
+    | string;
   createdAt: string;
   updatedAt: string;
 }
 
 export const referralApi = createApi({
-  reducerPath: 'referralApi',
+  reducerPath: "referralApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: '/api',
+    baseUrl: "/api",
     prepareHeaders: (headers) => {
       const token = localStorage.getItem("auth_token");
       if (token) {
@@ -115,7 +118,7 @@ export const referralApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Referrals'],
+  tagTypes: ["Referrals"],
   endpoints: (builder) => ({
     // Get user's referrals
     getMyReferrals: builder.query<Referral[], void>({
@@ -195,5 +198,5 @@ export const {
   useGetAllReferralsQuery,
   useGetReferralByIdQuery,
   useUpdateReferralMutation,
-  useSubmitReferralMutation
+  useSubmitReferralMutation,
 } = referralApi;
