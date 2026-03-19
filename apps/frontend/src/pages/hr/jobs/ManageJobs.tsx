@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useMemo } from "react";
+import { DEPARTMENTS } from "../../../types/constants/DEPARTMENTS";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -55,6 +55,7 @@ export interface Job {
 
 export default function ManageJobs() {
   const { data: jobs = [], isLoading, isError } = useGetJobsQuery();
+  console.log(jobs);
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,7 +104,8 @@ export default function ManageJobs() {
     try {
       await closeJob(jobId).unwrap();
       toast.success("Job closed successfully");
-    } catch (err) {
+    } catch (error) {
+      console.log(error);
       toast.error("Failed to close job");
     }
     setShowMenu(null);
@@ -220,6 +222,7 @@ export default function ManageJobs() {
       await deleteJob(jobId).unwrap();
       toast.success("Job deleted");
     } catch (error) {
+      console.log(error);
       toast.error("Failed to delete job");
     }
     setShowMenu(null);
@@ -236,6 +239,7 @@ export default function ManageJobs() {
       await toggleStatus(jobId).unwrap();
       toast.success("Job status updated");
     } catch (error) {
+      console.log(error);
       toast.error("Failed to update job status");
     }
     setShowMenu(null);
@@ -386,14 +390,11 @@ export default function ManageJobs() {
             className="px-4 py-2.5 rounded-lg border border-input bg-background focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           >
             <option value="all">All Departments</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Design">Design</option>
-            <option value="Product">Product</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Sales">Sales</option>
-            <option value="Operations">Operations</option>
-            <option value="HR">HR</option>
-            <option value="Finance">Finance</option>
+            {DEPARTMENTS.map((dept) => (
+              <option key={dept.value} value={dept.value}>
+                {dept.label}
+              </option>
+            ))}
           </select>
 
           {/* Job Type Filter */}
