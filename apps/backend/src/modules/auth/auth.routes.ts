@@ -11,6 +11,7 @@ import {
   getCurrentUser,
   logout,
   authFailed,
+  resetPassword,
 } from "./auth.controller.js";
 
 import { authRateLimiters } from "../../middlewares/rateLimiter.middleware.js";
@@ -31,6 +32,7 @@ router.get("/microsoft/callback", microsoftCallbackHandler, microsoftCallback);
 
 router.post("/send-otp", authRateLimiters.otp, sendOtp);
 router.post("/verify-otp", authRateLimiters.otp, verifyOtp);
+router.post("/reset-password", authRateLimiters.otp, resetPassword);
 
 /* ────────────────────────────────────────────── */
 /* Email/Password Routes */

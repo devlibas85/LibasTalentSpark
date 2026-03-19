@@ -226,6 +226,38 @@ export const logout = (req: Request, res: Response) => {
   });
 };
 
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const email = req.body.email?.toLowerCase().trim();
+    const { otp, password } = req.body;
+    if (!email || !otp || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email, OTP and Password required" });
+    }
+    await authService.resetPassword(email, otp, password);
+
+    return res.json({
+      success: true,
+      message: "Password reset successful",
+    });
+  } catch (error: any) {
+    console.error("Reset password error:", error);
+
+    if (error.message === "OTP expired") {
+      return res.status(400).json({ message: "OTP expired" });
+    }
+    if (error.message === "Incorrect OTP") {
+      return res.status(400).json({ message: "Incorrect OTP" });
+    }
+    if (error.message === "User not found") {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(500).json({ message: "Password reset failed" });
+  }
+};
+
 /* ────────────────────────────────────────────── */
 /* Failed Auth Controller */
 /* ────────────────────────────────────────────── */

@@ -208,4 +208,43 @@ export class AuthService {
 
     return user;
   }
+  /* ────────────────────────────────────────────── */
+  /* Reset Password Method */
+  /* ────────────────────────────────────────────── */
+
+  async resetPassword(
+    email: string,
+    otp: string,
+    password: string,
+  ): Promise<void> {
+    const user = await this.authRepository.findUserByEmail(email);
+
+    if (!user || !user.otp) {
+      throw new Error("Invalid OTP request");
+    }
+
+    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+      throw new Error("OTP expired");
+    }
+
+    if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
+      throw new Error("Too many failed attempts. Request new OTP.");
+    }
+
+    const isValid = await bcrypt.compare(otp, user.otp);
+
+    if (!isValid) {
+      await this.authRepository.incrementOtpAttempts(user._id.toString());
+      throw new Error("Incorrect OTP");
+    }
+
+    // OTP is valid — update password and clear OTP fields
+    user.password = password;
+    user.isOtpVerified = false;
+    user.otpAttempts = 0;
+    delete user.otp;
+    delete user.otpExpiresAt;
+
+    await this.authRepository.saveUser(user);
+  }
 }
