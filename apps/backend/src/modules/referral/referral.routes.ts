@@ -1,66 +1,49 @@
 import express from "express";
 
 import { ReferralController } from "./referral.controller.js";
-
 import { requireAuth } from "../../middlewares/requireAuth.middleware.js";
+import {
+  requireHR,
+  requireEmployee,
+  requireHRorEmployee,
+} from "../../middlewares/role.middlewares.js";
+import { referralRateLimiters } from "../../middlewares/rateLimiter.middleware.js";
 import { uploadResume } from "../../middlewares/upload.middleware.js";
 
 const router = express.Router();
-
-const referralController = new ReferralController();
-
-/**
- * POST /api/referrals
- * Employee submits referral
- */
-
 const controller = new ReferralController();
 
 // POST /api/referrals — Employee submits referral
-
 router.post(
   "/",
   requireAuth,
+  requireHRorEmployee,
+  referralRateLimiters.create,
   uploadResume.single("resume"),
-
-  referralController.createReferral,
+  controller.createReferral,
 );
 
-/**
- * GET /api/referrals
- * Get ALL referrals (for HR/Admin dashboard)
- */
-router.get("/", requireAuth, referralController.getAllReferrals);
+// GET /api/referrals/my-referrals — Employee's own referrals
 
-/**
- * GET /api/referrals/my-referrals
- * Employee dashboard - get current user's referrals
- */
-router.get("/my-referrals", requireAuth, referralController.getMyReferrals);
+router.get(
+  "/my-referrals",
+  requireAuth,
+  requireHRorEmployee,
+  controller.getMyReferrals,
+);
 
-/**
- * GET /api/referrals/:id
- * Get single referral by ID
- */
-router.get("/:id", requireAuth, referralController.getReferralById);
+// GET /api/referrals — All referrals (HR only)
+router.get("/", requireAuth, requireHR, controller.getAllReferrals);
 
-/**
- * POST /api/referrals/:id/actions
- * Add action to referral (HR actions)
- */
+// GET /api/referrals/:id — Single referral
+router.get("/:id", requireAuth, controller.getReferralById);
+
+// POST /api/referrals/:id/actions — HR updates referral status
 router.post(
   "/:id/actions",
   requireAuth,
-  referralController.updateReferralStatus,
+  requireHR,
+  controller.updateReferralStatus,
 );
-
-(controller.createReferral,
-  // GET /api/referrals — All referrals (HR/Admin dashboard)
-  router.get("/", requireAuth, controller.getAllReferrals));
-
-router.get("/my-referrals", requireAuth, controller.getMyReferrals);
-
-// POST /api/referrals/:id/actions — HR actions
-router.post("/:id/actions", requireAuth, controller.updateReferralStatus);
 
 export default router;

@@ -1,5 +1,4 @@
 import express from "express";
-import rateLimit from "express-rate-limit";
 
 import {
   microsoftAuth,
@@ -14,18 +13,10 @@ import {
   authFailed,
 } from "./auth.controller.js";
 
+import { authRateLimiters } from "../../middlewares/rateLimiter.middleware.js";
+import { verifyToken } from "../../middlewares/requireAuth.middleware.js";
+
 const router = express.Router();
-
-const otpLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
-  message: { message: "Too many OTP requests. Try later." },
-});
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-});
 
 /* ────────────────────────────────────────────── */
 /* Microsoft SSO Routes */
@@ -38,21 +29,21 @@ router.get("/microsoft/callback", microsoftCallbackHandler, microsoftCallback);
 /* OTP Routes */
 /* ────────────────────────────────────────────── */
 
-router.post("/send-otp", otpLimiter, sendOtp);
-router.post("/verify-otp", otpLimiter, verifyOtp);
+router.post("/send-otp", authRateLimiters.otp, sendOtp);
+router.post("/verify-otp", authRateLimiters.otp, verifyOtp);
 
 /* ────────────────────────────────────────────── */
 /* Email/Password Routes */
 /* ────────────────────────────────────────────── */
 
-router.post("/register", register);
-router.post("/login", loginLimiter, login);
+router.post("/register", authRateLimiters.register, register);
+router.post("/login", authRateLimiters.login, login);
 
 /* ────────────────────────────────────────────── */
 /* Session Routes */
 /* ────────────────────────────────────────────── */
 
-router.get("/me", getCurrentUser);
+router.get("/me", verifyToken, getCurrentUser);
 router.post("/logout", logout);
 
 /* ────────────────────────────────────────────── */
