@@ -1,7 +1,7 @@
 import express from "express";
 import { JobController } from "./job.controller.js";
-import { requireAuth } from "../middlewares/requireAuth.middleware.js";
-import { uploadJD } from "../middlewares/upload.middleware.js";
+import { requireAuth } from "../../middlewares/requireAuth.middleware.js";
+import { uploadJD } from "../../middlewares/upload.middleware.js";
 
 const router = express.Router();
 const controller = new JobController();

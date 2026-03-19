@@ -1,4 +1,4 @@
-import { Referral } from "../models/referral.Models.js";
+import { Referral } from "../../database/models/referral.Models.js";
 import { Types } from "mongoose";
 import type {
   IReferral,
