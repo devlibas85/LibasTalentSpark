@@ -35,13 +35,15 @@ export const authApi = createApi({
     credentials: "include", // sends httpOnly cookie on every request
   }),
   endpoints: (builder) => ({
-    // ✅ NEW: call on app load to restore auth state from cookie
     getMe: builder.query<MeResponse, void>({
       query: () => "/auth/me",
     }),
 
     // SEND OTP
-    sendOtp: builder.mutation<SuccessResponse, { email: string }>({
+    sendOtp: builder.mutation<
+      SuccessResponse,
+      { email: string; purpose: "signup" | "forgot" }
+    >({
       query: (body) => ({
         url: "/auth/send-otp",
         method: "POST",

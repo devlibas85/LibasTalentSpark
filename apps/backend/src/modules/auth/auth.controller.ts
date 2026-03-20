@@ -49,12 +49,13 @@ export const microsoftCallback = async (req: Request, res: Response) => {
 export const sendOtp = async (req: Request, res: Response) => {
   try {
     const email = req.body.email?.toLowerCase().trim();
+    const purpose = req.body.purpose;
 
-    if (!email) {
+    if (!email || !purpose) {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    await authService.generateAndSendOtp(email);
+    await authService.generateAndSendOtp(email, purpose);
 
     res.json({
       success: true,
