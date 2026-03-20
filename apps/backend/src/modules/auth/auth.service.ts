@@ -7,6 +7,10 @@ import { env } from "../../config/env.js";
 import { type UserDocument } from "../../database/models/user.Models.js";
 import { AuthRepository } from "./auth.repository.js";
 import { sendEmail } from "../../config/sendEmail.js";
+import {
+  forgotOtpTemplate,
+  signupOtpTemplate,
+} from "../../config/email.templates.js";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 5;
@@ -83,10 +87,26 @@ export class AuthService {
   /* ────────────────────────────────────────────── */
   /* OTP Methods */
   /* ────────────────────────────────────────────── */
+  private getNameFromEmail(email: string): string {
+    const [username = ""] = email.split("@");
 
-  async generateAndSendOtp(email: string): Promise<void> {
+    const cleaned = username
+      .replace(/[0-9]/g, "")
+      .replace(/[._-]/g, " ")
+      .trim();
+
+    if (!cleaned) return "User";
+
+    return cleaned
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+  async generateAndSendOtp(
+    email: string,
+    purpose: "signup" | "forgot",
+  ): Promise<void> {
     const otp = crypto.randomInt(100000, 999999).toString();
-    console.log(otp);
     const hashedOtp = await bcrypt.hash(otp, 10);
     const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
@@ -99,11 +119,22 @@ export class AuthService {
       isOtpVerified: false,
     });
 
-    await sendEmail(
-      email,
-      "Your OTP Code",
-      `<h2>Your OTP is: ${otp}</h2><p>Valid for ${OTP_EXPIRY_MINUTES} minutes.</p>`,
-    );
+    if (purpose === "signup") {
+      const name = this.getNameFromEmail(email);
+      await sendEmail(
+        email,
+        "Signup OTP - Libas TalentSpark",
+        signupOtpTemplate(name, otp, OTP_EXPIRY_MINUTES),
+      );
+    }
+
+    if (purpose === "forgot") {
+      await sendEmail(
+        email,
+        "Reset Password OTP - Libas TalentSpark",
+        forgotOtpTemplate(otp, OTP_EXPIRY_MINUTES),
+      );
+    }
   }
 
   async verifyOtp(email: string, otp: string): Promise<boolean> {

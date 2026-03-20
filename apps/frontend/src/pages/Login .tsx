@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,6 +22,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { setAuth } from "@/store/slice/authSlice";
 import { useDispatch } from "react-redux";
+import { toast } from "sonner";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 type InputProps = {
@@ -259,7 +259,6 @@ const StrengthBar = ({ password }: { password: string }) => {
 };
 
 // ─── LOGIN FORM ─────────────────────────────────────────────────────────────────
-// ─── LOGIN FORM ─────────────────────────────────────────────────────────────────
 function LoginForm({ onSwitchToSignup }: LoginFormProps) {
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [step, setStep] = useState<"email" | "otp" | "password">("email");
@@ -297,17 +296,22 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         );
         navigate("/dashboard");
       }
-    } catch (err: any) {
-      alert(err?.data?.message || "Login failed");
+    } catch (error) {
+      console.log(error);
+      toast.error("Login failed");
     }
   };
 
-  const handleSendOtp = async () => {
+  const handleSendForgotOtp = async () => {
     try {
-      await sendOtp({ email: forgotEmail }).unwrap();
+      await sendOtp({
+        email: forgotEmail,
+        purpose: "forgot",
+      }).unwrap();
       setStep("otp");
-    } catch (err: any) {
-      alert(err?.data?.message || "Failed to send OTP");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send OTP");
     }
   };
 
@@ -322,15 +326,16 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         otp,
         password: newPassword,
       }).unwrap();
-      alert("Password reset successful! Please sign in.");
+      toast.success("Password reset successful! Please sign in.");
       setMode("login");
       setStep("email");
       setForgotEmail("");
       setOtp("");
       setNewPassword("");
       setConfirmPw("");
-    } catch (err: any) {
-      alert(err?.data?.message || "Password reset failed");
+    } catch (error) {
+      console.log(error);
+      toast.error("Password reset failed");
     }
   };
 
@@ -384,7 +389,7 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
                 onChange={(e) => setForgotEmail(e.target.value)}
               />
               <PrimaryButton
-                onClick={handleSendOtp}
+                onClick={handleSendForgotOtp}
                 loading={isSendingOtp}
                 disabled={!forgotEmail}
               >
@@ -418,7 +423,7 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
               <p className="text-center text-xs text-muted-foreground">
                 Didn't receive it?{" "}
                 <button
-                  onClick={handleSendOtp}
+                  onClick={handleSendForgotOtp}
                   disabled={isSendingOtp}
                   className="text-primary hover:underline disabled:opacity-50"
                 >
@@ -568,36 +573,38 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
 
-  // ✅ Destructure isLoading from each mutation independently
   const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
   const [verifyOtp, { isLoading: isVerifyingOtp }] = useVerifyOtpMutation();
   const [register, { isLoading: isRegistering }] = useRegisterMutation();
-  // const [msLoading, setMsLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSendOTP = async () => {
+  const handleSendSignupOtp = async () => {
     try {
-      await sendOtp({ email }).unwrap();
+      await sendOtp({
+        email,
+        purpose: "signup",
+      }).unwrap();
       setStep("otp");
-    } catch (err: any) {
-      alert(err?.data?.message || "Failed to send OTP");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send OTP");
     }
   };
 
-  const handleVerifyOTP = async () => {
+  const handleVerifySignupOtp = async () => {
     try {
       await verifyOtp({ email, otp }).unwrap();
       setStep("password");
-    } catch (err: any) {
-      alert(err?.data?.message || "Invalid OTP");
+    } catch (error) {
+      console.log(error);
+      toast.error("Invalid OTP");
     }
   };
 
   const handleRegister = async () => {
     try {
-      // ✅ Send name along with email + password
       const res = await register({ email, password, name }).unwrap();
       if (res.success) {
         dispatch(
@@ -609,15 +616,11 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         );
         navigate("/dashboard");
       }
-    } catch (err: any) {
-      alert(err?.data?.message || "Registration failed");
+    } catch (error) {
+      console.log(error);
+      toast.error("Registration failed");
     }
   };
-
-  // const handleMicrosoftLogin = () => {
-  //   setMsLoading(true);
-  //   window.location.href = "http://localhost:4000/auth/microsoft";
-  // };
 
   const slide = {
     initial: { opacity: 0, x: 16 },
@@ -659,9 +662,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            {/* ✅ loading={isSendingOtp} from the sendOtp mutation */}
             <PrimaryButton
-              onClick={handleSendOTP}
+              onClick={handleSendSignupOtp}
               loading={isSendingOtp}
               disabled={!email || !name}
             >
@@ -680,9 +682,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               <span className="text-primary font-semibold">{email}</span>
             </p>
             <OtpInput value={otp} onChange={setOtp} />
-            {/* ✅ loading={isVerifyingOtp} from the verifyOtp mutation */}
             <PrimaryButton
-              onClick={handleVerifyOTP}
+              onClick={handleVerifySignupOtp}
               loading={isVerifyingOtp}
               disabled={otp.length < 6}
             >
@@ -690,9 +691,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
             </PrimaryButton>
             <p className="text-center text-xs text-muted-foreground">
               Didn't receive it?{" "}
-              {/* ✅ Resend reuses isSendingOtp so the button reflects pending state */}
               <button
-                onClick={handleSendOTP}
+                onClick={handleSendSignupOtp}
                 disabled={isSendingOtp}
                 className="text-primary hover:underline disabled:opacity-50"
               >
@@ -747,7 +747,6 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
               value={confirmPw}
               onChange={(e) => setConfirmPw(e.target.value)}
             />
-            {/* ✅ loading={isRegistering} from the register mutation */}
             <PrimaryButton
               onClick={handleRegister}
               loading={isRegistering}
