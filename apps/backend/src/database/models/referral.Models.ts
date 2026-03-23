@@ -15,7 +15,7 @@ const referralActionSchema = new Schema(
     },
     actionBy: {
       type: Types.ObjectId,
-      ref: "User", 
+      ref: "User",
     },
     actionAt: {
       type: Date,
@@ -25,7 +25,7 @@ const referralActionSchema = new Schema(
       type: String,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const referralSchema = new Schema(
@@ -74,41 +74,40 @@ const referralSchema = new Schema(
       ],
       default: "submitted",
     },
-aiEvaluation: {
-  summary: {
-    score: { type: Number },
-    verdict: { type: String },
-    confidence: { type: String },
-  },
+    interviewDate: { type: Date, default: null },
+    aiEvaluation: {
+      summary: {
+        score: { type: Number },
+        verdict: { type: String },
+        confidence: { type: String },
+      },
 
-  skills: {
-    match_percentage: { type: Number },
-    matched: [{ type: String }],
-    missing: [{ type: String }],
-    critical_gap: { type: Boolean },
-  },
+      skills: {
+        match_percentage: { type: Number },
+        matched: [{ type: String }],
+        missing: [{ type: String }],
+        critical_gap: { type: Boolean },
+      },
 
-  experience: {
-    candidate_years: { type: Number },
-    required_years: { type: Number },
-    meets_requirement: { type: Boolean },
-    gap_months: { type: Number },
-    career_break_detected: { type: Boolean },
-    overlap_detected: { type: Boolean },
-    leadership_bonus_applied: { type: Boolean },
-    overqualified_flag: { type: Boolean },
-  },
+      experience: {
+        candidate_years: { type: Number },
+        required_years: { type: Number },
+        meets_requirement: { type: Boolean },
+        gap_months: { type: Number },
+        career_break_detected: { type: Boolean },
+        overlap_detected: { type: Boolean },
+        leadership_bonus_applied: { type: Boolean },
+        overqualified_flag: { type: Boolean },
+      },
 
-  risk_flags: [{ type: String }],
+      risk_flags: [{ type: String }],
 
-  recommendation: { type: String },
+      recommendation: { type: String },
 
-  llm_explanation: { type: String },
+      llm_explanation: { type: String },
 
-  evaluatedAt: { type: Date },
-},
-
-
+      evaluatedAt: { type: Date },
+    },
 
     // ===== HR / SYSTEM LOGS =====
     actionHistory: [referralActionSchema],
@@ -129,7 +128,7 @@ aiEvaluation: {
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 export const Referral = mongoose.model("Referral", referralSchema);

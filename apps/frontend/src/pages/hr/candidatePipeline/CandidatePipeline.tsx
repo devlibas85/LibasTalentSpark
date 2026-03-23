@@ -92,7 +92,24 @@ export default function CandidatePipeline() {
   const [rejectConfirm, setRejectConfirm] = useState<string | null>(null);
 
   const navigate = useNavigate();
+  const handleViewCandidate = async (candidateId: string) => {
+    const referral = referrals.find((r) => r._id === candidateId);
 
+    if (referral?.status === "submitted") {
+      try {
+        await updateReferral({
+          id: candidateId,
+          data: { action: "reviewed", remarks: "Viewed by HR" },
+        }).unwrap();
+
+        refetch();
+      } catch (error) {
+        console.log("Auto review update failed", error);
+      }
+    }
+
+    navigate(`/candidates/${candidateId}`);
+  };
   const candidates: Candidate[] = referrals.map((r: Referral) => {
     const initials = r.candidateName
       .split(" ")
@@ -199,7 +216,7 @@ export default function CandidatePipeline() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-card border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => navigate(`/candidates/${candidate.id}`)}
+      onClick={() => handleViewCandidate(candidate.id)}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -297,7 +314,7 @@ export default function CandidatePipeline() {
         <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
           {/* Eye — view profile */}
           <button
-            onClick={() => navigate(`/candidates/${candidate.id}`)}
+            onClick={() => handleViewCandidate(candidate.id)}
             className="p-1.5 hover:bg-muted rounded transition-colors text-muted-foreground hover:text-foreground"
             title="View profile"
           >
@@ -580,9 +597,7 @@ export default function CandidatePipeline() {
                       </td>
                       <td className="px-4 py-4">
                         <button
-                          onClick={() =>
-                            navigate(`/candidates/${candidate.id}`)
-                          }
+                          onClick={() => handleViewCandidate(candidate.id)}
                           className="p-2 hover:bg-muted rounded-lg transition-colors"
                         >
                           <ChevronRight size={18} />

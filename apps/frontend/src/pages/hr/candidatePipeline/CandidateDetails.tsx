@@ -25,6 +25,7 @@ import {
   Edit,
   Share2,
   Users,
+  X,
   History,
   type LucideIcon,
 } from "lucide-react";
@@ -134,6 +135,8 @@ const recommendationMeta = (rec?: string) => {
 };
 
 export const CandidateDetails = () => {
+  const [interviewDate, setInterviewDate] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -186,10 +189,6 @@ export const CandidateDetails = () => {
     console.log("All Referrals API Response:", referrals);
   }, [referrals]);
 
-  const handleScheduleInterview = async () => {
-    await handleStatusUpdate("interview_scheduled", actionRemarks);
-  };
-
   const handleHire = async () => {
     await handleStatusUpdate("hired", actionRemarks);
   };
@@ -198,6 +197,45 @@ export const CandidateDetails = () => {
     if (referral?.candidateEmail) {
       window.location.href = `mailto:${referral.candidateEmail}`;
       toast.success("Opening email client...");
+    }
+  };
+  const handleScheduleInterviewClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const [isScheduling, setIsScheduling] = useState(false);
+
+  const handleConfirmSchedule = async () => {
+    if (!interviewDate) {
+      toast.error("Please select a date and time for the interview");
+      return;
+    }
+    if (!id) {
+      toast.error("Invalid candidate ID");
+      return;
+    }
+
+    setIsScheduling(true);
+    try {
+      await updateReferral({
+        id,
+        data: {
+          action: "interview_scheduled",
+          remarks: actionRemarks,
+          interviewDate: interviewDate,
+        },
+      }).unwrap();
+
+      toast.success("Interview Scheduled Successfully");
+      setIsModalOpen(false);
+      setInterviewDate("");
+      setActionRemarks("");
+      refetch();
+    } catch (error) {
+      toast.error("Failed to schedule interview");
+      console.log(error);
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -946,7 +984,7 @@ export const CandidateDetails = () => {
                 referral?.status === "under_review" ? (
                   <>
                     <button
-                      onClick={handleScheduleInterview}
+                      onClick={handleScheduleInterviewClick}
                       className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors font-medium flex items-center justify-center gap-2"
                     >
                       <Calendar size={18} />
@@ -1091,6 +1129,55 @@ export const CandidateDetails = () => {
           </div>
         </div>
       </div>
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-semibold">Schedule Interview</h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Select Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={interviewDate}
+                  onChange={(e) => setInterviewDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 rounded-lg border border-input hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmSchedule}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                {isScheduling ? "Scheduling..." : "Schedule Interview"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
