@@ -88,7 +88,7 @@ export class ReferralController {
   updateReferralStatus = async (req: any, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const { action, remarks } = req.body;
+      const { action, remarks, interviewDate } = req.body;
 
       // Validate action
       const validActions = [
@@ -102,10 +102,14 @@ export class ReferralController {
         res.status(400).json({ error: "Invalid action" });
         return;
       }
-
+      if (action === "interview_scheduled" && !interviewDate) {
+        res.status(400).json({ error: "Interview date is required" });
+        return;
+      }
       const updateData: UpdateReferralStatusDTO = {
         action,
         remarks,
+        interviewDate,
         userId: req.user._id.toString(),
       };
 

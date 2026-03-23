@@ -61,6 +61,8 @@ export interface IReferral {
     | "interview_scheduled"
     | "rejected"
     | "hired";
+
+  interviewDate?: Date | null;
   aiEvaluation?: IAIEvaluation;
   actionHistory: IReferralAction[];
   deleted: boolean;
@@ -89,6 +91,7 @@ export interface CreateReferralDTO {
 export interface UpdateReferralStatusDTO {
   action: "reviewed" | "interview_scheduled" | "rejected" | "hired";
   remarks?: string | null; // Updated to allow null
+  interviewDate?: string | null;
   userId: string;
 }
 

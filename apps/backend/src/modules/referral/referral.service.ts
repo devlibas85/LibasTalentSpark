@@ -6,6 +6,11 @@ import type {
   ReferralQueryParams,
 } from "./referral.interface.js";
 import { triggerAIAsync } from "../../middlewares/aiServices.js";
+import { sendEmail } from "../../config/sendEmail.js";
+import {
+  interviewReferrerTemplate,
+  interviewScheduledTemplate,
+} from "../../config/email.templates.js";
 
 export class ReferralService {
   private repository: ReferralRepository;
@@ -67,9 +72,64 @@ export class ReferralService {
   ): Promise<IReferral> {
     try {
       const referral = await this.repository.updateStatus(id, updateData);
+
       if (!referral) {
         throw new Error("Referral not found");
       }
+
+      if (updateData.action === "interview_scheduled") {
+        const completeReferral = await this.repository.findByIdWithPopulate(id);
+
+        if (completeReferral) {
+          setImmediate(() => {
+            (async () => {
+              try {
+                const candidateEmail = completeReferral.candidateEmail;
+                const candidateName = completeReferral.candidateName;
+                const referrerEmail =
+                  (completeReferral.referredBy as any)?.email ?? null;
+                const jobTitle =
+                  (completeReferral.job as any)?.title ?? "the position";
+                const interviewDate = completeReferral.interviewDate
+                  ? new Date(completeReferral.interviewDate).toLocaleString()
+                  : undefined;
+
+                // Send candidate email — template lives in email.templates.ts
+                await sendEmail(
+                  candidateEmail,
+                  "Interview Scheduled – Libas TalentSpark",
+                  interviewScheduledTemplate(
+                    candidateName,
+                    jobTitle,
+                    interviewDate,
+                  ),
+                );
+
+                // Send referrer email if available
+                if (referrerEmail) {
+                  await sendEmail(
+                    referrerEmail,
+                    "Candidate Interview Scheduled – Libas TalentSpark",
+                    interviewReferrerTemplate(
+                      candidateName,
+                      jobTitle,
+                      interviewDate,
+                    ),
+                  );
+                }
+              } catch (err) {
+                console.error("Interview email failed:", err);
+              }
+            })();
+          });
+        } else {
+          console.error(
+            "Could not fetch complete referral details for ID:",
+            id,
+          );
+        }
+      }
+
       return referral;
     } catch (error: any) {
       throw new Error(`Failed to update referral status: ${error.message}`);

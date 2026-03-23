@@ -80,6 +80,7 @@ export interface Referral {
   notes?: string;
   resume: string;
   status: ReferralStatus;
+  interviewDate?: string | null;
   job: {
     _id: string;
     title: string;
@@ -146,6 +147,7 @@ export const referralApi = createApi({
         data: {
           action: string;
           remarks?: string;
+          interviewDate?: string;
         };
       }
     >({

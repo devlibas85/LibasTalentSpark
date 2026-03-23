@@ -54,7 +54,7 @@ export async function triggerAIAsync({
 
     const response = await axios.post(process.env.AI_SERVICE_URL!, formData, {
       headers: formData.getHeaders(),
-      timeout: 60000,
+      timeout: 300000,
       maxBodyLength: Infinity,
     });
 

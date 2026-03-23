@@ -23,12 +23,13 @@ import { useSubmitReferralMutation } from "@/store/api/refralApi";
 
 export default function BrowseJobs() {
   const { data: allJobs = [], isLoading, isError } = useGetJobsQuery();
-  const [submitReferral, { isLoading: isSubmitting }] = useSubmitReferralMutation();
+  const [submitReferral, { isLoading: isSubmitting }] =
+    useSubmitReferralMutation();
 
   // Filter for published jobs only
   const publishedJobs = useMemo(
     () => allJobs.filter((job) => job.status === "published" && !job.deleted),
-    [allJobs]
+    [allJobs],
   );
 
   // State
@@ -51,15 +52,15 @@ export default function BrowseJobs() {
   // Get unique values for filters
   const departments = useMemo(
     () => ["all", ...new Set(publishedJobs.map((job) => job.department))],
-    [publishedJobs]
+    [publishedJobs],
   );
   const locations = useMemo(
     () => ["all", ...new Set(publishedJobs.map((job) => job.location))],
-    [publishedJobs]
+    [publishedJobs],
   );
   const jobTypes = useMemo(
     () => ["all", ...new Set(publishedJobs.map((job) => job.jobType))],
-    [publishedJobs]
+    [publishedJobs],
   );
 
   // Filtered jobs
@@ -75,9 +76,17 @@ export default function BrowseJobs() {
       const matchesJobType =
         selectedJobType === "all" || job.jobType === selectedJobType;
 
-      return matchesSearch && matchesDepartment && matchesLocation && matchesJobType;
+      return (
+        matchesSearch && matchesDepartment && matchesLocation && matchesJobType
+      );
     });
-  }, [publishedJobs, searchTerm, selectedDepartment, selectedLocation, selectedJobType]);
+  }, [
+    publishedJobs,
+    searchTerm,
+    selectedDepartment,
+    selectedLocation,
+    selectedJobType,
+  ]);
 
   // Stats
   const stats = [
@@ -152,7 +161,6 @@ export default function BrowseJobs() {
         notes: "",
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("Referral submit error:", err);
       toast.error("Failed to submit referral. Please try again.");
     }
@@ -196,7 +204,9 @@ export default function BrowseJobs() {
         className="flex items-center justify-center min-h-screen"
       >
         <div className="text-center p-6 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load jobs</p>
+          <p className="text-red-600 dark:text-red-400 font-medium">
+            Failed to load jobs
+          </p>
           <p className="text-sm text-red-500 dark:text-red-300 mt-1">
             Please try refreshing the page
           </p>
@@ -218,7 +228,7 @@ export default function BrowseJobs() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
           Browse Jobs
         </h1>
         <p className="text-muted-foreground mt-2">
@@ -243,9 +253,9 @@ export default function BrowseJobs() {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, y: -4 }}
-                className={`relative overflow-hidden border rounded-2xl p-5 bg-gradient-to-br ${stat.color} hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group`}
+                className={`relative overflow-hidden border rounded-2xl p-5 bg-linear-to-br ${stat.color} hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="relative z-10">
                   <div className="flex items-center justify-between mb-3">
                     <div className={`p-2 rounded-lg ${stat.iconColor}`}>
@@ -257,7 +267,9 @@ export default function BrowseJobs() {
                     />
                   </div>
                   <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {stat.label}
+                  </p>
                 </div>
               </motion.div>
             );
@@ -321,7 +333,7 @@ export default function BrowseJobs() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
                 {/* Department Filter */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium mb-2 items-center gap-2">
                     <Building2 size={16} className="text-primary" />
                     Department
                   </label>
@@ -340,7 +352,7 @@ export default function BrowseJobs() {
 
                 {/* Location Filter */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium mb-2 items-center gap-2">
                     <MapPin size={16} className="text-emerald-500" />
                     Location
                   </label>
@@ -359,7 +371,7 @@ export default function BrowseJobs() {
 
                 {/* Job Type Filter */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium mb-2 items-center gap-2">
                     <Clock size={16} className="text-blue-500" />
                     Job Type
                   </label>
@@ -407,8 +419,15 @@ export default function BrowseJobs() {
         className="flex items-center justify-between"
       >
         <p className="text-sm text-muted-foreground">
-          Showing <span className="font-semibold text-foreground">{filteredJobs.length}</span> of{" "}
-          <span className="font-semibold text-foreground">{publishedJobs.length}</span> jobs
+          Showing{" "}
+          <span className="font-semibold text-foreground">
+            {filteredJobs.length}
+          </span>{" "}
+          of{" "}
+          <span className="font-semibold text-foreground">
+            {publishedJobs.length}
+          </span>{" "}
+          jobs
         </p>
       </motion.div>
 
@@ -455,10 +474,10 @@ export default function BrowseJobs() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                className="relative border rounded-xl p-6 bg-gradient-to-br from-card to-card/50 hover:shadow-xl transition-all duration-300 group overflow-hidden"
+                className="relative border rounded-xl p-6 bg-linear-to-br from-card to-card/50 hover:shadow-xl transition-all duration-300 group overflow-hidden"
               >
                 {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 <div className="relative z-10 space-y-4">
                   {/* Header */}
@@ -474,7 +493,7 @@ export default function BrowseJobs() {
                     </div>
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
-                      className="bg-gradient-to-r from-emerald-500 to-green-500 text-white text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 shadow-lg"
+                      className="bg-linear-to-r from-emerald-500 to-green-500 text-white text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1 shadow-lg"
                     >
                       <Sparkles size={10} />
                       Bonus
@@ -482,22 +501,25 @@ export default function BrowseJobs() {
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                  <p className="text-sm text-muted-foreground line-clamp-2 min-h-10">
                     {job.description}
                   </p>
 
                   {/* Details */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin size={14} className="text-primary flex-shrink-0" />
+                      <MapPin size={14} className="text-primary shrink-0" />
                       <span className="truncate">{job.location}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock size={14} className="text-blue-500 flex-shrink-0" />
+                      <Clock size={14} className="text-blue-500 shrink-0" />
                       <span>{job.jobType}</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs">
-                      <DollarSign size={14} className="text-emerald-500 flex-shrink-0" />
+                      <DollarSign
+                        size={14}
+                        className="text-emerald-500 shrink-0"
+                      />
                       <span className="font-semibold text-foreground">
                         {formatSalary(job.salaryMin, job.salaryMax)}
                       </span>
@@ -540,7 +562,7 @@ export default function BrowseJobs() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => openReferralForm(job._id)}
-                    className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary/90 text-primary-foreground text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+                    className="w-full px-4 py-2.5 rounded-lg bg-linear-to-r from-primary to-primary/90 text-primary-foreground text-sm font-medium hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group/btn"
                   >
                     <Send size={16} />
                     Refer a Candidate
@@ -576,7 +598,7 @@ export default function BrowseJobs() {
             >
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  <h2 className="text-2xl font-bold bg-linear-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                     Submit Referral
                   </h2>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -600,7 +622,7 @@ export default function BrowseJobs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium mb-2 items-center gap-2">
                     <Users size={16} className="text-primary" />
                     Candidate Name *
                   </label>
@@ -609,7 +631,10 @@ export default function BrowseJobs() {
                     required
                     value={referralData.candidateName}
                     onChange={(e) =>
-                      setReferralData({ ...referralData, candidateName: e.target.value })
+                      setReferralData({
+                        ...referralData,
+                        candidateName: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2.5 border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="Enter full name"
@@ -622,7 +647,7 @@ export default function BrowseJobs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
                     <Users size={16} className="text-blue-500" />
                     Email Address *
                   </label>
@@ -631,7 +656,10 @@ export default function BrowseJobs() {
                     required
                     value={referralData.candidateEmail}
                     onChange={(e) =>
-                      setReferralData({ ...referralData, candidateEmail: e.target.value })
+                      setReferralData({
+                        ...referralData,
+                        candidateEmail: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2.5 border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="candidate@example.com"
@@ -644,7 +672,7 @@ export default function BrowseJobs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium mb-2  items-center gap-2">
                     <Users size={16} className="text-emerald-500" />
                     Phone Number *
                   </label>
@@ -653,7 +681,10 @@ export default function BrowseJobs() {
                     required
                     value={referralData.candidatePhone}
                     onChange={(e) =>
-                      setReferralData({ ...referralData, candidatePhone: e.target.value })
+                      setReferralData({
+                        ...referralData,
+                        candidatePhone: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2.5 border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     placeholder="+91 XXXXX XXXXX"
@@ -673,7 +704,10 @@ export default function BrowseJobs() {
                     required
                     value={referralData.relationship}
                     onChange={(e) =>
-                      setReferralData({ ...referralData, relationship: e.target.value })
+                      setReferralData({
+                        ...referralData,
+                        relationship: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2.5 border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     disabled={isSubmitting}
@@ -692,7 +726,9 @@ export default function BrowseJobs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <label className="block text-sm font-medium mb-2">Resume/CV *</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Resume/CV *
+                  </label>
                   <input
                     type="file"
                     required
@@ -711,11 +747,16 @@ export default function BrowseJobs() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <label className="block text-sm font-medium mb-2">Additional Notes</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Additional Notes
+                  </label>
                   <textarea
                     value={referralData.notes}
                     onChange={(e) =>
-                      setReferralData({ ...referralData, notes: e.target.value })
+                      setReferralData({
+                        ...referralData,
+                        notes: e.target.value,
+                      })
                     }
                     className="w-full px-4 py-2.5 border rounded-lg bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                     rows={4}
@@ -744,7 +785,7 @@ export default function BrowseJobs() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="flex-1 px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-primary/90 text-primary-foreground font-medium hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2.5 rounded-lg bg-linear-to-r from-primary to-primary/90 text-primary-foreground font-medium hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (

@@ -98,11 +98,17 @@ export class ReferralRepository {
     }
 
     referral.status = newStatus;
+    if (
+      updateData.action === "interview_scheduled" &&
+      updateData.interviewDate
+    ) {
+      referral.interviewDate = new Date(updateData.interviewDate);
+    }
     referral.actionHistory.push({
       action: updateData.action,
       actionBy: new Types.ObjectId(updateData.userId),
       actionAt: new Date(),
-      remarks: updateData.remarks || null,
+      ...(updateData.remarks && { remarks: updateData.remarks }),
     });
 
     await referral.save();
@@ -142,6 +148,14 @@ export class ReferralRepository {
       },
       { new: true },
     );
+    return referral as unknown as IReferral | null;
+  }
+  async findByIdWithPopulate(id: string): Promise<IReferral | null> {
+    const referral = await Referral.findById(id)
+      .populate("referredBy") // Populate referrer details
+      .populate("job") // Populate job details
+      .exec();
+
     return referral as unknown as IReferral | null;
   }
 }
