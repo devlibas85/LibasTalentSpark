@@ -89,6 +89,7 @@ export class ReferralController {
     try {
       const { id } = req.params;
       const { action, remarks, interviewDate } = req.body;
+      console.log(interviewDate);
 
       // Validate action
       const validActions = [

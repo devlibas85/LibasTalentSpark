@@ -98,6 +98,8 @@ export class ReferralRepository {
     }
 
     referral.status = newStatus;
+    console.log("📅 interviewDate received:", updateData.interviewDate); // ← add this
+    console.log("📅 parsed date:", new Date(updateData.interviewDate!)); // ← add this
     if (
       updateData.action === "interview_scheduled" &&
       updateData.interviewDate

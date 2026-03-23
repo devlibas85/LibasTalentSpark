@@ -80,7 +80,7 @@ export interface Referral {
   notes?: string;
   resume: string;
   status: ReferralStatus;
-  interviewDate?: string | null;
+  interviewDate?: string;
   job: {
     _id: string;
     title: string;

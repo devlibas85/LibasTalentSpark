@@ -29,11 +29,13 @@ import {
   History,
   type LucideIcon,
 } from "lucide-react";
+
 interface ReferredBy {
   _id: string;
   name: string;
   email: string;
 }
+
 // Status configuration
 const statusConfig: Record<
   ReferralStatus,
@@ -73,41 +75,23 @@ const statusConfig: Record<
 
 const calculateATSScore = (ai?: Referral["aiEvaluation"]) => {
   if (!ai) return 0;
-
-  // 1. Prefer explicit summary score
-  if (ai.summary?.score != null) {
-    return Math.round(ai.summary.score);
-  }
-
-  // 2. Use flat root-level scores if present
+  if (ai.summary?.score != null) return Math.round(ai.summary.score);
   const flatScores = [ai.keyword_score, ai.skills_score, ai.exp_score];
   if (flatScores.some((s) => s != null)) {
     const filled = flatScores.filter((s) => s != null) as number[];
     return Math.round(filled.reduce((a, b) => a + b, 0) / filled.length);
   }
-
-  // 3. Fall back to nested skills match percentage
-  if (ai.skills?.match_percentage != null) {
+  if (ai.skills?.match_percentage != null)
     return Math.round(ai.skills.match_percentage);
-  }
-
   return 0;
 };
 
-/**
- * Returns true when the aiEvaluation object has enough data to render the
- * score panel. Checks BOTH flat and nested structures so the spinner is not
- * shown indefinitely when the backend uses either format.
- */
 const hasEvaluationScores = (ai: Referral["aiEvaluation"]): boolean => {
   if (!ai) return false;
-
   const hasFlatScores =
     ai.keyword_score != null || ai.skills_score != null || ai.exp_score != null;
-
   const hasNestedScores =
     ai.summary?.score != null || ai.skills?.match_percentage != null;
-
   return hasFlatScores || hasNestedScores;
 };
 
@@ -119,20 +103,24 @@ const scoreColor = (score: number) => {
 
 const recommendationMeta = (rec?: string) => {
   if (!rec) return { label: "Pending", color: "bg-gray-100 text-gray-600" };
-
   const value = rec.toLowerCase();
-
   if (value.includes("hire"))
     return { label: rec, color: "bg-green-100 text-green-700" };
-
   if (value.includes("interview"))
     return { label: rec, color: "bg-yellow-100 text-yellow-700" };
-
   if (value.includes("reject"))
     return { label: rec, color: "bg-red-100 text-red-700" };
-
   return { label: rec, color: "bg-blue-100 text-blue-700" };
 };
+
+const formatInterviewDate = (date: string) =>
+  new Date(date).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 export const CandidateDetails = () => {
   const [interviewDate, setInterviewDate] = useState("");
@@ -152,27 +140,20 @@ export const CandidateDetails = () => {
     isError,
     refetch,
   } = useGetAllReferralsQuery();
-
   const [updateReferral] = useUpdateReferralMutation();
 
   const referral = referrals.find((r: Referral) => r._id === id);
 
-  // Handle status update
   const handleStatusUpdate = async (action: string, remarks?: string) => {
     if (!id) {
       toast.error("Invalid candidate ID");
       return;
     }
-
     try {
       await updateReferral({
         id,
-        data: {
-          action,
-          remarks: remarks || actionRemarks,
-        },
+        data: { action, remarks: remarks || actionRemarks },
       }).unwrap();
-
       toast.success("Referral updated successfully");
       setActionRemarks("");
       refetch();
@@ -199,6 +180,7 @@ export const CandidateDetails = () => {
       toast.success("Opening email client...");
     }
   };
+
   const handleScheduleInterviewClick = () => {
     setIsModalOpen(true);
   };
@@ -214,7 +196,6 @@ export const CandidateDetails = () => {
       toast.error("Invalid candidate ID");
       return;
     }
-
     setIsScheduling(true);
     try {
       await updateReferral({
@@ -222,10 +203,9 @@ export const CandidateDetails = () => {
         data: {
           action: "interview_scheduled",
           remarks: actionRemarks,
-          interviewDate: interviewDate,
+          interviewDate,
         },
       }).unwrap();
-
       toast.success("Interview Scheduled Successfully");
       setIsModalOpen(false);
       setInterviewDate("");
@@ -316,7 +296,6 @@ export const CandidateDetails = () => {
             >
               <ArrowLeft size={20} />
             </button>
-
             <div>
               <h1 className="text-2xl font-bold">{referral.candidateName}</h1>
               <p className="text-sm text-muted-foreground">
@@ -324,7 +303,6 @@ export const CandidateDetails = () => {
               </p>
             </div>
           </div>
-
           <div className="flex gap-2">
             <button className="p-2 hover:bg-muted rounded-lg transition-colors">
               <Share2 size={18} />
@@ -339,7 +317,7 @@ export const CandidateDetails = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Info */}
+          {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Candidate Profile Card */}
             <motion.div
@@ -351,7 +329,6 @@ export const CandidateDetails = () => {
                 <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold">
                   {initials}
                 </div>
-
                 <div className="flex-1">
                   <h2 className="text-2xl font-bold mb-1">
                     {referral.candidateName}
@@ -359,7 +336,6 @@ export const CandidateDetails = () => {
                   <p className="text-muted-foreground mb-4">
                     {referral.job?.title || "Position Not Specified"}
                   </p>
-
                   <span
                     className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border ${status.bg}`}
                   >
@@ -417,15 +393,26 @@ export const CandidateDetails = () => {
                     <p className="text-sm font-medium">
                       {new Date(referral.createdAt).toLocaleDateString(
                         "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        },
+                        { month: "short", day: "numeric", year: "numeric" },
                       )}
                     </p>
                   </div>
                 </div>
+
+                {/* ✅ Interview Date in profile card */}
+                {referral.interviewDate && (
+                  <div className="flex items-center gap-3 col-span-2">
+                    <Calendar size={18} className="text-purple-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        Interview Scheduled
+                      </p>
+                      <p className="text-sm font-medium text-purple-600">
+                        {formatInterviewDate(referral.interviewDate)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
 
@@ -461,7 +448,6 @@ export const CandidateDetails = () => {
                         <Icon size={18} />
                         {tab.label}
                       </div>
-
                       {activeTab === tab.id && (
                         <motion.div
                           layoutId="activeTab"
@@ -488,7 +474,6 @@ export const CandidateDetails = () => {
                             {referral.job?.title || "—"}
                           </span>
                         </div>
-
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">
                             Location
@@ -497,11 +482,23 @@ export const CandidateDetails = () => {
                             {referral.job?.location || "—"}
                           </span>
                         </div>
-
                         <div className="flex justify-between col-span-2">
                           <span className="text-muted-foreground">Job ID</span>
                           <span className="font-mono text-xs">
                             {referral.job?._id || "—"}
+                          </span>
+                        </div>
+                        {/* ✅ Interview date in overview tab */}
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-muted-foreground">
+                            Interview Date
+                          </span>
+                          <span
+                            className={`font-medium ${referral.interviewDate ? "text-purple-600" : ""}`}
+                          >
+                            {referral.interviewDate
+                              ? formatInterviewDate(referral.interviewDate)
+                              : "—"}
                           </span>
                         </div>
                       </div>
@@ -521,7 +518,6 @@ export const CandidateDetails = () => {
                             {(referral.referredBy as ReferredBy)?.name || "—"}
                           </span>
                         </div>
-
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">
                             Referrer Email
@@ -530,7 +526,6 @@ export const CandidateDetails = () => {
                             {(referral.referredBy as ReferredBy)?.email || "—"}
                           </span>
                         </div>
-
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">
                             Relationship
@@ -548,7 +543,6 @@ export const CandidateDetails = () => {
                           <FileText size={18} className="text-primary" />
                           Resume
                         </h3>
-
                         <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border">
                           <div className="flex items-center gap-3">
                             <FileText size={20} className="text-primary" />
@@ -587,17 +581,35 @@ export const CandidateDetails = () => {
                             {index !== referral.actionHistory!.length - 1 && (
                               <div className="absolute left-5 top-12 bottom-0 w-0.5 bg-border" />
                             )}
-
                             <div className="relative shrink-0">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <Clock size={18} className="text-primary" />
+                              <div
+                                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  action.action === "interview_scheduled"
+                                    ? "bg-purple-100"
+                                    : "bg-primary/10"
+                                }`}
+                              >
+                                {action.action === "interview_scheduled" ? (
+                                  <Calendar
+                                    size={18}
+                                    className="text-purple-600"
+                                  />
+                                ) : (
+                                  <Clock size={18} className="text-primary" />
+                                )}
                               </div>
                             </div>
 
                             <div className="flex-1 pb-8">
-                              <div className="bg-muted/30 rounded-xl p-4 border">
+                              <div
+                                className={`rounded-xl p-4 border ${
+                                  action.action === "interview_scheduled"
+                                    ? "bg-purple-50 border-purple-200"
+                                    : "bg-muted/30"
+                                }`}
+                              >
                                 <p className="font-medium mb-1 capitalize">
-                                  {action.action.replace("_", " ")}
+                                  {action.action.replace(/_/g, " ")}
                                 </p>
                                 <p className="text-xs text-muted-foreground mb-2">
                                   {new Date(action.actionAt).toLocaleDateString(
@@ -618,6 +630,28 @@ export const CandidateDetails = () => {
                                       ?.email ||
                                     "Unknown"}
                                 </p>
+
+                                {/* ✅ Show interview date inside the timeline event */}
+                                {action.action === "interview_scheduled" &&
+                                  referral.interviewDate && (
+                                    <div className="mt-3 flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-purple-200 w-fit">
+                                      <Calendar
+                                        size={14}
+                                        className="text-purple-600 shrink-0"
+                                      />
+                                      <span className="text-sm font-medium text-purple-700">
+                                        {formatInterviewDate(
+                                          referral.interviewDate,
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                {action.remarks && (
+                                  <div className="mt-2 text-xs text-muted-foreground italic">
+                                    Remarks: {action.remarks}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -641,7 +675,6 @@ export const CandidateDetails = () => {
                       <MessageSquare size={18} className="text-primary" />
                       Referral Notes
                     </h3>
-
                     {referral.notes ? (
                       <div className="bg-muted/30 rounded-xl p-4 border">
                         <p className="text-sm whitespace-pre-wrap">
@@ -681,19 +714,14 @@ export const CandidateDetails = () => {
                 (() => {
                   const ai = referral.aiEvaluation;
                   const ats = calculateATSScore(ai);
-
-                  // Resolve matched/missing from flat fields first, then nested fallback
                   const matchedSkills =
                     ai.matched_keywords ?? ai.skills?.matched ?? [];
                   const missingSkills =
                     ai.missing_keywords ?? ai.skills?.missing ?? [];
-
-                  // Resolve experience from flat fields first, then nested fallback
                   const candidateYears =
                     ai.resume_years ?? ai.experience?.candidate_years ?? 0;
                   const requiredYears =
                     ai.jd_years ?? ai.experience?.required_years ?? 0;
-
                   const meta = recommendationMeta(ai.recommendation);
 
                   if (!hasEvaluationScores(ai)) {
@@ -715,7 +743,6 @@ export const CandidateDetails = () => {
 
                   return (
                     <div className="space-y-5">
-                      {/* Overall Score */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm text-muted-foreground">
@@ -725,24 +752,16 @@ export const CandidateDetails = () => {
                             {ats}%
                           </span>
                         </div>
-
                         <div className="h-2.5 w-full bg-muted rounded-full overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${ats}%` }}
                             transition={{ duration: 0.6 }}
-                            className={`h-full ${
-                              ats >= 80
-                                ? "bg-green-500"
-                                : ats >= 60
-                                  ? "bg-yellow-500"
-                                  : "bg-red-500"
-                            }`}
+                            className={`h-full ${ats >= 80 ? "bg-green-500" : ats >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
                           />
                         </div>
                       </div>
 
-                      {/* Detailed Scores — flat fields */}
                       {(ai.keyword_score != null ||
                         ai.skills_score != null ||
                         ai.exp_score != null) && (
@@ -782,7 +801,6 @@ export const CandidateDetails = () => {
                         </div>
                       )}
 
-                      {/* Detailed Scores — nested fallback (summary + skills) */}
                       {ai.keyword_score == null &&
                         ai.skills_score == null &&
                         ai.exp_score == null &&
@@ -821,7 +839,6 @@ export const CandidateDetails = () => {
                           </div>
                         )}
 
-                      {/* Experience */}
                       <div className="space-y-2 text-sm border-t pt-4">
                         <div className="flex justify-between">
                           <span>Candidate Experience</span>
@@ -838,18 +855,13 @@ export const CandidateDetails = () => {
                         <div className="flex justify-between">
                           <span>Meets Requirement</span>
                           <span
-                            className={`font-semibold ${
-                              candidateYears >= requiredYears
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
+                            className={`font-semibold ${candidateYears >= requiredYears ? "text-green-600" : "text-red-600"}`}
                           >
                             {candidateYears >= requiredYears ? "Yes ✓" : "No ✗"}
                           </span>
                         </div>
                       </div>
 
-                      {/* AI Recommendation */}
                       {ai.recommendation && (
                         <div className="border-t pt-4">
                           <p className="text-sm text-muted-foreground mb-2">
@@ -863,19 +875,16 @@ export const CandidateDetails = () => {
                         </div>
                       )}
 
-                      {/* Matched Skills */}
                       <div className="border-t pt-4">
                         <p className="text-sm text-muted-foreground mb-2">
                           Matched Keywords ({matchedSkills.length})
                         </p>
-
                         {matchedSkills.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {matchedSkills.map((skill, idx) => (
                               <span
                                 key={idx}
-                                className="px-3 py-1 rounded-full text-xs font-medium
-                                           bg-green-100 text-green-700 border border-green-200"
+                                className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200"
                               >
                                 {skill}
                               </span>
@@ -888,19 +897,16 @@ export const CandidateDetails = () => {
                         )}
                       </div>
 
-                      {/* Missing Skills */}
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">
                           Missing Keywords ({missingSkills.length})
                         </p>
-
                         {missingSkills.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {missingSkills.map((skill, idx) => (
                               <span
                                 key={idx}
-                                className="px-3 py-1 rounded-full text-xs font-medium
-                                           bg-red-100 text-red-700 border border-red-200"
+                                className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-200"
                               >
                                 {skill}
                               </span>
@@ -913,13 +919,11 @@ export const CandidateDetails = () => {
                         )}
                       </div>
 
-                      {/* Risk Flags */}
                       {ai.risk_flags?.length ? (
                         <div className="border-t pt-4">
                           <p className="text-sm text-muted-foreground mb-2">
                             Risk Analysis
                           </p>
-
                           <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
                             {ai.risk_flags.map((flag, index) => (
                               <div
@@ -934,7 +938,6 @@ export const CandidateDetails = () => {
                         </div>
                       ) : null}
 
-                      {/* AI Explanation */}
                       {ai.llm_explanation && (
                         <div className="border-t pt-4">
                           <button
@@ -945,7 +948,6 @@ export const CandidateDetails = () => {
                               ? "Hide AI Explanation"
                               : "View AI Explanation"}
                           </button>
-
                           {showExplanation && (
                             <div className="mt-3 bg-muted/30 rounded-xl p-4 text-sm whitespace-pre-wrap leading-relaxed">
                               {ai.llm_explanation}
@@ -978,7 +980,6 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Quick Actions</h3>
-
               <div className="space-y-3">
                 {referral?.status === "submitted" ||
                 referral?.status === "under_review" ? (
@@ -990,7 +991,6 @@ export const CandidateDetails = () => {
                       <Calendar size={18} />
                       Schedule Interview
                     </button>
-
                     <button
                       onClick={handleReject}
                       className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
@@ -1008,7 +1008,6 @@ export const CandidateDetails = () => {
                       <CheckCircle2 size={18} />
                       Mark as Hired
                     </button>
-
                     <button
                       onClick={handleReject}
                       className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium flex items-center justify-center gap-2"
@@ -1022,7 +1021,6 @@ export const CandidateDetails = () => {
                     No actions available for this status
                   </div>
                 )}
-
                 <button
                   onClick={handleSendEmail}
                   className="w-full px-4 py-3 bg-muted hover:bg-muted/80 rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
@@ -1044,7 +1042,6 @@ export const CandidateDetails = () => {
                 <MessageSquare size={18} className="text-primary" />
                 Add Remarks
               </h3>
-
               <textarea
                 value={actionRemarks}
                 onChange={(e) => setActionRemarks(e.target.value)}
@@ -1062,7 +1059,6 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Current Status</h3>
-
               <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-xl border">
                 {referral &&
                   (() => {
@@ -1083,6 +1079,22 @@ export const CandidateDetails = () => {
                     );
                   })()}
               </div>
+
+              {/* ✅ Interview date in status card */}
+              {referral.status === "interview_scheduled" &&
+                referral.interviewDate && (
+                  <div className="mt-3 flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                    <Calendar size={16} className="text-purple-600 shrink-0" />
+                    <div>
+                      <p className="text-xs text-purple-500">
+                        Interview Scheduled For
+                      </p>
+                      <p className="text-sm font-semibold text-purple-700">
+                        {formatInterviewDate(referral.interviewDate)}
+                      </p>
+                    </div>
+                  </div>
+                )}
             </motion.div>
 
             {/* Metadata */}
@@ -1093,7 +1105,6 @@ export const CandidateDetails = () => {
               className="bg-card border rounded-2xl p-6"
             >
               <h3 className="font-semibold mb-4">Metadata</h3>
-
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Created</span>
@@ -1101,25 +1112,20 @@ export const CandidateDetails = () => {
                     {new Date(referral.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Last Updated</span>
                   <span className="font-medium">
                     {new Date(referral.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
-
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Candidate ID</span>
                   <span className="font-mono text-xs">{referral._id}</span>
                 </div>
-
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Deleted</span>
                   <span
-                    className={`font-medium ${
-                      referral.deleted ? "text-red-600" : "text-green-600"
-                    }`}
+                    className={`font-medium ${referral.deleted ? "text-red-600" : "text-green-600"}`}
                   >
                     {referral.deleted ? "Yes" : "No"}
                   </span>
@@ -1129,11 +1135,11 @@ export const CandidateDetails = () => {
           </div>
         </div>
       </div>
-      {/* Modal */}
+
+      {/* Schedule Interview Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-background rounded-lg shadow-xl max-w-md w-full">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h3 className="text-lg font-semibold">Schedule Interview</h3>
               <button
@@ -1143,8 +1149,6 @@ export const CandidateDetails = () => {
                 <X size={20} />
               </button>
             </div>
-
-            {/* Modal Body */}
             <div className="p-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
@@ -1159,8 +1163,6 @@ export const CandidateDetails = () => {
                 />
               </div>
             </div>
-
-            {/* Modal Footer */}
             <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
               <button
                 onClick={() => setIsModalOpen(false)}
