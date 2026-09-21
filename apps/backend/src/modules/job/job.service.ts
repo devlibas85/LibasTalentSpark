@@ -115,7 +115,7 @@ export class JobService {
     return updatedJob;
   }
 
-  async toggleJobStatus(id: string, userId: string) {
+  async toggleJobStatus(id: string, _userId: string) {
     const job = await this.jobRepository.findById(id);
     if (!job) {
       throw new Error("Job not found");
@@ -142,7 +142,7 @@ export class JobService {
     return updatedJob;
   }
 
-  async closeJob(id: string, userId: string) {
+  async closeJob(id: string, _userId: string) {
     const job = await this.jobRepository.findById(id);
     if (!job) {
       throw new Error("Job not found");

@@ -1,5 +1,5 @@
 import { UserRepository } from "./user.repository.js";
-import type { UserDocument } from "../models/user.Models.js";
+import type { UserDocument } from "../../database/models/user.Models.js";
 import type { IUpdateProfileData } from "./profile.types.js";
 
 export class ProfileService {
@@ -28,7 +28,6 @@ export class ProfileService {
   async updateProfile(
     userId: string,
     profileData: IUpdateProfileData,
-    currentUser?: UserDocument,
   ): Promise<{
     user: UserDocument | null;
     isProfileComplete: boolean;

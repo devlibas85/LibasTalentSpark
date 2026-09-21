@@ -68,8 +68,7 @@ export default function AuthSuccess() {
         });
 
         navigate("/dashboard", { replace: true });
-      } catch (error) {
-        console.debug("Authentication failed:", error);
+      } catch {
         localStorage.removeItem("auth_token");
          toast.error("Authentication failed. Please login again.", {
           id: toastId,

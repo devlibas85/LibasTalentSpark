@@ -1,12 +1,9 @@
-import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 
-import { getHealth } from "./api/health";
-
 // Pages
-import Login from "./pages/Login ";
+import Login from "./pages/Login";
 import AuthSuccess from "./pages/AuthSuccess";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -34,9 +31,6 @@ import EditJob from "./pages/hr/jobs/editJob";
 function App() {
   const role = useSelector((state: RootState) => state.auth.role);
 
-  useEffect(() => {
-    getHealth().then((res) => console.debug("health:", res));
-  }, []);
 
   // ✅ ProtectedRoute handles the loading spinner while /me is in-flight.
   // By the time any child route renders, role will be set.

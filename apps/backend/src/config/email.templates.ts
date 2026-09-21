@@ -79,7 +79,7 @@ export const signupOtpTemplate = (
           <div style="text-align: center;">
             <p style="color: #73036b; font-size: 14px; font-weight: 600; margin: 10px 0 5px;">Zivore Apparel Private Limited</p>
             <p style="color: #999; font-size: 12px; margin: 2px 0;">Empowering Women's Fashion Since 2020</p>
-            <p style="color: #ccc; font-size: 11px; margin-top: 15px;">© 2024 Libas. All rights reserved.</p>
+            <p style="color: #ccc; font-size: 11px; margin-top: 15px;">© 2026 Libas. All rights reserved.</p>
           </div>
         </div>
       </div>
@@ -270,7 +270,7 @@ export const referralSuccessTemplate = (
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px;">
-          <p style="color: #ccc; font-size: 11px;">© 2024 Libas - A Zivore Apparel Private Limited Brand</p>
+          <p style="color: #ccc; font-size: 11px;">© 2026 Libas - A Zivore Apparel Private Limited Brand</p>
         </div>
       </div>
     </div>
@@ -353,7 +353,7 @@ export const interviewScheduledTemplate = (
           </div>
         </div>
         <div style="text-align: center; margin-top: 20px;">
-          <p style="color: #ccc; font-size: 11px;">© 2024 Libas - A Zivore Apparel Private Limited Brand</p>
+          <p style="color: #ccc; font-size: 11px;">© 2026 Libas - A Zivore Apparel Private Limited Brand</p>
         </div>
       </div>
     </div>
@@ -424,5 +424,99 @@ export const interviewReferrerTemplate = (
     <p style="color: #666; font-size: 14px; margin-top: 25px;">Thank you for your referral!</p>
     <p style="color: #666; font-size: 14px; margin: 5px 0;">Regards,<br/><strong style="color: #73036b;">HR Team</strong><br/>Libas TalentSpark</p>
   </div>
+  `;
+};
+
+export const rejectionTemplate = (candidateName: string, jobTitle: string) => {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body style="margin:0; padding:0; font-family: 'Quicksand', 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #f5f0ff 0%, #f8e6f7 100%);">
+    <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 20px 40px rgba(115, 3, 107, 0.15);">
+      
+      <div style="background: linear-gradient(135deg, #73036b 0%, #9a0f8f 100%); padding: 30px 20px; text-align: center;">
+        <img src="YOUR_LOGO_URL_HERE" alt="Libas Logo" style="width: 90px; height: auto; margin-bottom: 15px; filter: brightness(0) invert(1);" />
+        <h1 style="color: white; margin: 5px 0; font-size: 32px;">LIBAS</h1>
+        <p style="color: rgba(255,255,255,0.8); font-size: 12px;">Zivore Apparel Pvt. Ltd.</p>
+      </div>
+
+      <div style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <span style="background: #ffebee; color: #c62828; padding: 8px 30px; border-radius: 50px; font-size: 14px; font-weight: 600;">📋 APPLICATION UPDATE</span>
+        </div>
+        
+        <h2 style="color: #73036b; font-size: 28px; margin: 30px 0 20px; text-align: center;">Dear ${candidateName},</h2>
+        
+        <div style="background: #fff5f5; border-radius: 20px; padding: 25px; margin: 20px 0; border-left: 4px solid #c62828;">
+          <p style="color: #444; font-size: 16px; line-height: 1.8; margin: 0 0 15px;">
+            Thank you for taking the time to apply for the <strong style="color: #73036b;">${jobTitle}</strong> position at Libas.
+          </p>
+          
+          <p style="color: #444; font-size: 16px; line-height: 1.8; margin: 0 0 15px;">
+            After careful consideration of your application, we have decided not to move forward with your candidacy at this time. This was a difficult decision, as we were impressed with your qualifications and experience.
+          </p>
+          
+          <p style="color: #444; font-size: 16px; line-height: 1.8; margin: 0;">
+            Please know that this decision does not reflect your potential as a professional. We received an exceptional number of qualified applications, and we had to make some very tough choices.
+          </p>
+        </div>
+        
+        <div style="background: #f3e5f5; border-radius: 20px; padding: 25px; margin: 20px 0;">
+          <p style="color: #73036b; margin: 0 0 15px; font-size: 18px; font-weight: 600;">💫 We See Your Potential</p>
+          <p style="color: #666; margin: 0; font-size: 15px; line-height: 1.6;">
+            Your skills and passion are valuable, and we genuinely believe you have a bright future ahead. We would love to stay connected and encourage you to apply for future opportunities that align with your expertise.
+          </p>
+        </div>
+
+        <div style="background: #fff3e0; border-radius: 20px; padding: 25px; margin: 20px 0;">
+          <p style="color: #e67e22; margin: 0 0 15px; font-size: 18px; font-weight: 600;">🌟 Moving Forward</p>
+          <p style="color: #666; margin: 0; font-size: 15px; line-height: 1.6;">
+            We encourage you to:
+          </p>
+          <ul style="color: #666; margin: 10px 0 0 20px; padding-left: 0; list-style: none;">
+            <li style="margin-bottom: 8px;">✨ Follow us on LinkedIn for future openings</li>
+            <li style="margin-bottom: 8px;">✨ Visit our careers page regularly</li>
+            <li style="margin-bottom: 8px;">✨ Keep building your amazing skills</li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0 20px;">
+          <p style="color: #999; font-size: 15px; line-height: 1.6; font-style: italic;">
+            "Every rejection is a redirection. Your perfect opportunity is waiting for you somewhere else."
+          </p>
+        </div>
+        
+        <div style="border-top: 2px solid #f0e6ff; padding-top: 25px; margin-top: 25px;">
+          <p style="color: #73036b; font-size: 15px; font-weight: 500; text-align: center; margin: 0 0 10px;">
+            Thank you for considering Libas
+          </p>
+          <p style="color: #999; font-size: 13px; text-align: center; margin: 0;">
+            We wish you all the very best in your job search journey. 🌸
+          </p>
+        </div>
+      </div>
+
+      <div style="background: #fafafa; padding: 25px; border-top: 3px solid #73036b;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+          <div>
+            <p style="color: #73036b; margin: 0; font-weight: 600; font-size: 16px;">Pallavi Manna</p>
+            <p style="color: #666; margin: 5px 0 0; font-size: 13px;">HR Manager, Zivore Apparel Pvt. Ltd.</p>
+          </div>
+          <div style="background: #f0e6ff; padding: 8px 20px; border-radius: 50px; margin-top: 10px;">
+            <p style="color: #73036b; margin: 0; font-size: 12px;">✨ We Believe in You</p>
+          </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+          <p style="color: #ccc; font-size: 11px;">© 2026 Libas - A Zivore Apparel Private Limited Brand</p>
+        </div>
+      </div>
+    </div>
+  </body>
+  </html>
   `;
 };

@@ -42,7 +42,8 @@ export class JobRepository {
   }
 
   async findAll(filters: IJobFilters = {}): Promise<IJob[]> {
-    const query: any = {};
+    // Always exclude soft-deleted jobs unless the caller explicitly asks for them
+    const query: any = { deleted: filters.deleted ?? false };
 
     if (filters.status) query.status = filters.status;
     if (filters.department) query.department = filters.department;

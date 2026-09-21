@@ -119,7 +119,7 @@ export class ProfileController {
       };
 
       const { user: updatedUser, isProfileComplete } =
-        await this.profileService.updateProfile(userId, profileData, req.user);
+        await this.profileService.updateProfile(userId, profileData);
 
       if (!updatedUser) {
         res.status(404).json({

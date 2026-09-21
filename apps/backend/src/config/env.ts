@@ -14,6 +14,9 @@ export const env = {
   port: Number(process.env.PORT) || 4000,
   nodeEnv: process.env.NODE_ENV || "development",
 
+  // Session
+  sessionSecret: required("SESSION_SECRET"),
+
   // Azure SSO
   azureClientId: required("AZURE_CLIENT_ID"),
   azureTenantId: required("AZURE_TENANT_ID"),

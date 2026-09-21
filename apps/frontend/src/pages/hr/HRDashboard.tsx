@@ -115,31 +115,59 @@ export default function HRDashboard() {
   }, [pipelineCounts]);
 
   // Upcoming interviews derived from referrals with status 'interview_scheduled'
+  // Upcoming interviews derived from referrals with status 'interview_scheduled'
   const upcomingInterviews = useMemo(() => {
     return referrals
       .filter((r) => r.status === "interview_scheduled")
       .map((r) => {
-        // try to find a timestamp from actionHistory
-        const history = (r.actionHistory || []).slice().reverse();
-        const interviewAction = history.find((h: any) =>
-          (h.action || "").toLowerCase().includes("interview"),
-        );
-        const timeRaw = interviewAction?.actionAt || r.createdAt || "";
-        const time = timeRaw
-          ? new Date(timeRaw).toLocaleString("en-IN", {
+        // Get the interview date - use the interviewDate field if available
+        let interviewDateTime = null;
+        let formattedTime = "Scheduled";
+
+        // Check if interviewDate exists
+        if (r.interviewDate) {
+          interviewDateTime = new Date(r.interviewDate);
+          formattedTime = interviewDateTime.toLocaleString("en-IN", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          });
+        } else {
+          // Fallback to actionHistory if interviewDate not set
+          const history = (r.actionHistory || []).slice().reverse();
+          const interviewAction = history.find((h: any) =>
+            (h.action || "").toLowerCase().includes("interview"),
+          );
+          const timeRaw = interviewAction?.actionAt || r.createdAt || "";
+          if (timeRaw) {
+            interviewDateTime = new Date(timeRaw);
+            formattedTime = interviewDateTime.toLocaleString("en-IN", {
               month: "short",
               day: "numeric",
               hour: "numeric",
               minute: "2-digit",
-            })
-          : "Scheduled";
+            });
+          }
+        }
+
         return {
           id: r._id,
           name: r.candidateName,
           role: (r.job && (r.job as any).title) || "Candidate",
-          time,
+          time: formattedTime,
+          interviewDate: interviewDateTime, // Store the date object for sorting
         };
-      });
+      })
+      .filter((interview) => interview.interviewDate !== null) // Only include interviews with valid dates
+      .sort((a, b) => {
+        // Sort by interview date (earliest first)
+        if (a.interviewDate && b.interviewDate) {
+          return a.interviewDate.getTime() - b.interviewDate.getTime();
+        }
+        return 0;
+      })
+      .slice(0, 2); // Take only the next 2 interviews
   }, [referrals]);
 
   // Stats with icons and colors
@@ -357,7 +385,7 @@ export default function HRDashboard() {
       </motion.div>
 
       {/* Middle section with enhanced animations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Candidate Pipeline with REAL data */}
         <motion.div
           initial={{ x: -20, opacity: 0 }}
@@ -495,11 +523,7 @@ export default function HRDashboard() {
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
                   <span>Interview: {pipelineCounts["Interview"]}</span>
                 </div>
-                <ArrowRight size={16} className="text-muted-foreground" />
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                  <span>Offer: {pipelineCounts["Offer"]}</span>
-                </div>
+
                 <ArrowRight size={16} className="text-muted-foreground" />
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
@@ -510,6 +534,7 @@ export default function HRDashboard() {
           )}
         </motion.div>
 
+        {/* Upcoming Interviews */}
         {/* Upcoming Interviews */}
         <motion.div
           initial={{ x: 20, opacity: 0 }}
@@ -523,8 +548,8 @@ export default function HRDashboard() {
           </div>
           <ul className="space-y-4">
             {upcomingInterviews.length === 0 ? (
-              <li className="p-3 rounded-xl text-sm text-muted-foreground">
-                No upcoming interviews
+              <li className="p-3 rounded-xl text-sm text-muted-foreground text-center">
+                No upcoming interviews scheduled
               </li>
             ) : (
               upcomingInterviews.map((interview, index) => (
@@ -534,7 +559,8 @@ export default function HRDashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + index * 0.06 }}
                   whileHover={{ x: 4 }}
-                  className="p-3 rounded-xl hover:bg-accent/50 transition-colors duration-200"
+                  className="p-3 rounded-xl hover:bg-accent/50 transition-colors duration-200 cursor-pointer"
+                  onClick={() => navigate(`/candidates/${interview.id}`)}
                 >
                   <div className="flex items-start gap-3">
                     <div
@@ -549,20 +575,32 @@ export default function HRDashboard() {
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <Clock size={12} className="text-muted-foreground" />
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs font-medium text-primary">
                           {interview.time}
                         </p>
                       </div>
                     </div>
                     <ArrowRight
                       size={16}
-                      className="text-muted-foreground mt-1"
+                      className="text-muted-foreground mt-1 group-hover:text-primary transition-colors"
                     />
                   </div>
                 </motion.li>
               ))
             )}
           </ul>
+          {upcomingInterviews.length > 0 && (
+            <div className="mt-4 pt-3 border-t text-center">
+              <button
+                onClick={() =>
+                  navigate("/candidates?status=interview_scheduled")
+                }
+                className="text-xs text-primary hover:underline"
+              >
+                View all interviews →
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
 

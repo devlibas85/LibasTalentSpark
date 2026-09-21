@@ -9,12 +9,6 @@ import type {
 
 export class ReferralRepository {
   async create(referralData: CreateReferralDTO): Promise<IReferral> {
-    console.log("🔍 referralData:", {
-      jobId: referralData.jobId,
-      userId: referralData.userId,
-      jobIdType: typeof referralData.jobId,
-      userIdType: typeof referralData.userId,
-    });
     const referral = await Referral.create({
       candidateName: referralData.candidateName,
       candidateEmail: referralData.candidateEmail,
@@ -98,8 +92,7 @@ export class ReferralRepository {
     }
 
     referral.status = newStatus;
-    console.log("📅 interviewDate received:", updateData.interviewDate); // ← add this
-    console.log("📅 parsed date:", new Date(updateData.interviewDate!)); // ← add this
+
     if (
       updateData.action === "interview_scheduled" &&
       updateData.interviewDate
@@ -154,10 +147,13 @@ export class ReferralRepository {
   }
   async findByIdWithPopulate(id: string): Promise<IReferral | null> {
     const referral = await Referral.findById(id)
-      .populate("referredBy") // Populate referrer details
-      .populate("job") // Populate job details
+      .populate("referredBy", "name email") // Explicitly specify fields
+      .populate("job", "title location department") // Explicitly specify fields
+      .populate("actionHistory.actionBy", "name email")
       .exec();
 
-    return referral as unknown as IReferral | null;
+    // Convert to plain object and ensure proper typing
+    const plainReferral = referral?.toObject();
+    return plainReferral as IReferral | null;
   }
 }

@@ -10,6 +10,7 @@ import { sendEmail } from "../../config/sendEmail.js";
 import {
   interviewReferrerTemplate,
   interviewScheduledTemplate,
+  rejectionTemplate,
 } from "../../config/email.templates.js";
 
 export class ReferralService {
@@ -44,12 +45,8 @@ export class ReferralService {
     queryParams?: ReferralQueryParams,
   ): Promise<IReferral[]> {
     try {
-      // If not admin/hr, only return user's own referrals
-      if (
-        userRole &&
-        !["admin", "hr"].includes(userRole.toLowerCase()) &&
-        userId
-      ) {
+      // If not HR, only return the user's own referrals
+      if (userRole && !["HR", "ADMIN"].includes(userRole) && userId) {
         return await this.repository.findByUser(userId);
       }
       return await this.repository.findAll(queryParams);
@@ -94,7 +91,7 @@ export class ReferralService {
                   ? new Date(completeReferral.interviewDate).toLocaleString()
                   : undefined;
 
-                // Send candidate email — template lives in email.templates.ts
+                // Send candidate email
                 await sendEmail(
                   candidateEmail,
                   "Interview Scheduled – Libas TalentSpark",
@@ -117,8 +114,10 @@ export class ReferralService {
                     ),
                   );
                 }
+
+                console.log("✅ Interview scheduled emails sent successfully");
               } catch (err) {
-                console.error("Interview email failed:", err);
+                console.error("❌ Interview email failed:", err);
               }
             })();
           });
@@ -130,6 +129,54 @@ export class ReferralService {
         }
       }
 
+      if (updateData.action === "rejected") {
+        const completeReferral = await this.repository.findByIdWithPopulate(id);
+
+        if (completeReferral) {
+          setImmediate(() => {
+            (async () => {
+              try {
+                const candidateEmail = completeReferral.candidateEmail;
+                const candidateName = completeReferral.candidateName;
+
+                // Validate email exists
+                if (!candidateEmail) {
+                  console.error(
+                    "❌ No candidate email found for referral:",
+                    id,
+                  );
+                  return;
+                }
+
+                let jobTitle = "the position";
+                if (
+                  completeReferral.job &&
+                  typeof completeReferral.job === "object" &&
+                  "title" in completeReferral.job
+                ) {
+                  jobTitle = completeReferral.job.title as string;
+                }
+
+                const emailHtml = rejectionTemplate(candidateName, jobTitle);
+
+                await sendEmail(
+                  candidateEmail,
+                  "Application Update – Libas TalentSpark",
+                  emailHtml,
+                );
+              } catch (err) {
+                console.error("❌ Rejection email failed with error:", err);
+                if (err instanceof Error) {
+                  console.error("Error message:", err.message);
+                  console.error("Error stack:", err.stack);
+                }
+              }
+            })();
+          });
+        } else {
+          console.error("❌ Complete referral NOT found for ID:", id);
+        }
+      }
       return referral;
     } catch (error: any) {
       throw new Error(`Failed to update referral status: ${error.message}`);

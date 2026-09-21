@@ -297,8 +297,8 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Login failed");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Login failed. Please check your credentials.");
     }
   };
 
@@ -310,8 +310,8 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       }).unwrap();
       setStep("otp");
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to send OTP");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Failed to send OTP. Please try again.");
     }
   };
 
@@ -334,8 +334,8 @@ function LoginForm({ onSwitchToSignup }: LoginFormProps) {
       setNewPassword("");
       setConfirmPw("");
     } catch (error) {
-      console.log(error);
-      toast.error("Password reset failed");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Password reset failed. Please try again.");
     }
   };
 
@@ -588,8 +588,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       }).unwrap();
       setStep("otp");
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to send OTP");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Failed to send OTP. Please try again.");
     }
   };
 
@@ -598,8 +598,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
       await verifyOtp({ email, otp }).unwrap();
       setStep("password");
     } catch (error) {
-      console.log(error);
-      toast.error("Invalid OTP");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Invalid OTP. Please check and try again.");
     }
   };
 
@@ -617,8 +617,8 @@ function SignupForm({ onSwitchToLogin }: SignupFormProps) {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Registration failed");
+      const message = (error as { data?: { message?: string } })?.data?.message;
+      toast.error(message ?? "Registration failed. Please try again.");
     }
   };
 

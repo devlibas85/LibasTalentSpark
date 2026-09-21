@@ -1,16 +1,9 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Award, Calendar, Clock, Zap, Target, UserPlus } from "lucide-react";
-import { useGetAllReferralsQuery } from "../../store/api/refralApi";
-import { useGetJobsQuery } from "../../store/api/jobApi";
-export interface Job {
-  _id: string;
-  title: string;
-  location?: string;
-
-  status?: "draft" | "published" | "closed"; // ✅ add this
-  isActive?: boolean; // ✅ add this
-}
+import { useGetAllReferralsQuery } from "@/store/api/refralApi";
+import { useGetJobsQuery } from "@/store/api/jobApi";
+import type { Job } from "@/types/job";
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
@@ -235,10 +228,8 @@ export default function ReportsAnalytics() {
   const maxMonthly = Math.max(...monthlyTrend.map((m) => m.submitted), 1);
 
   // ── job board ─────────────────────────────────────────────────────────────
-  const activeJobs = jobs.filter(
-    (j) => j.status === "published" || (j as Job).isActive,
-  );
-  const closedJobs = jobs.filter((j) => (j as Job).status === "closed");
+  const activeJobs = jobs.filter((j) => j.status === "published");
+  const closedJobs = jobs.filter((j) => j.status === "closed");
 
   // ── loading ───────────────────────────────────────────────────────────────
   if (refLoading || jobLoading) {
@@ -681,7 +672,7 @@ export default function ReportsAnalytics() {
               const refCount = filtered.filter(
                 (r) => r.job._id === j._id,
               ).length;
-              const isActive = j.status === "published" || (j as Job).isActive;
+              const isActive = j.status === "published";
               return (
                 <div key={j._id} className="flex items-center gap-3">
                   <div

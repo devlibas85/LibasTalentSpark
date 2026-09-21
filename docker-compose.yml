@@ -15,7 +15,7 @@ services:
       dockerfile: apps/backend/Dockerfile
     container_name: libas-backend
     ports:
-      - "4000:4000"
+      - "5555:4000"
     env_file:
       - .env
     volumes:
@@ -29,7 +29,7 @@ services:
       dockerfile: apps/frontend/Dockerfile
     container_name: libas-frontend
     ports:
-      - "3000:80"
+      - "7777:80"
     depends_on:
       - backend
 

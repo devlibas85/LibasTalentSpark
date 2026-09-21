@@ -6,24 +6,28 @@ import { PersistGate } from "redux-persist/integration/react";
 import { Toaster } from "sonner";
 
 import { store, persistor } from "./store";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import App from "./App";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Provider store={store}>
-<PersistGate
-  loading={
-    <div className="min-h-screen flex items-center justify-center">
-      Loading session...
-    </div>
-  }
-  persistor={persistor}
->        <BrowserRouter>
-         <Toaster richColors position="top-right" />
-          <App />
-        </BrowserRouter>
-      </PersistGate>
-    </Provider>
-  </StrictMode>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <PersistGate
+          loading={
+            <div className="min-h-screen flex items-center justify-center text-sm text-muted-foreground">
+              Loading…
+            </div>
+          }
+          persistor={persistor}
+        >
+          <BrowserRouter>
+            <Toaster richColors position="top-right" />
+            <App />
+          </BrowserRouter>
+        </PersistGate>
+      </Provider>
+    </ErrorBoundary>
+  </StrictMode>,
 );

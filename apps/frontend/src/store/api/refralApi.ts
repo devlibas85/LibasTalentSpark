@@ -111,13 +111,7 @@ export const referralApi = createApi({
   reducerPath: "referralApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api",
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
+    credentials: "include",
   }),
   tagTypes: ["Referrals"],
   endpoints: (builder) => ({

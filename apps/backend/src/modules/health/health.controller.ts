@@ -1,7 +1,9 @@
-export const  healthCheck = (_req: any, res:any)=>{
-    res.json({
-        status:"ok",
-        service: "LibasTalentSpark API",
-        timeStamp :new Date().toISOString(),
-    })
-}
+import type { Request, Response } from "express";
+
+export const healthCheck = (_req: Request, res: Response) => {
+  res.json({
+    status: "ok",
+    service: "LibasTalentSpark API",
+    timestamp: new Date().toISOString(),
+  });
+};

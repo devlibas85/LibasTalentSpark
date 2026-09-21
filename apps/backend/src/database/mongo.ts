@@ -3,14 +3,11 @@ import { env } from "../config/env.js";
 
 export const connectMongo = async () => {
   try {
-    console.log("Mongo URI used:", env.mongoUri);
-
     await mongoose.connect(env.mongoUri, {
-      serverSelectionTimeoutMS: 10000, // 10 seconds
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
-    console.log("✅ MONGODB CONNECTED");
-    console.log("Connected to database:", mongoose.connection.name);
+    console.log(`✅ MongoDB connected [${mongoose.connection.name}]`);
   } catch (error:any) {
     console.error("❌ MONGO connection failed:", error.message);
     

@@ -1,7 +1,8 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import passport from "passport";
 
 import { AuthService } from "./auth.service.js";
+import { env } from "../../config/env.js";
 
 const authService = new AuthService();
 
@@ -14,7 +15,7 @@ export const microsoftAuth = passport.authenticate("azuread-openidconnect");
 export const microsoftCallbackHandler = (
   req: Request,
   res: Response,
-  next: Function,
+  next: NextFunction,
 ) => {
   passport.authenticate(
     "azuread-openidconnect",
@@ -35,7 +36,7 @@ export const microsoftCallback = async (req: Request, res: Response) => {
     const { user, token } = await authService.handleMicrosoftAuth(profile);
 
     authService.setAuthCookie(res, token);
-    return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    return res.redirect(`${env.frontendUrl}/dashboard`);
   } catch (error) {
     console.error("❌ Auth callback failed:", error);
     res.redirect("/auth/failed");
@@ -218,7 +219,7 @@ export const logout = (req: Request, res: Response) => {
   res.clearCookie("token", {
     httpOnly: true,
     sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure: env.nodeEnv === "production",
   });
 
   res.status(200).json({

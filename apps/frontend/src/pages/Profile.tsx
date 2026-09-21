@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -15,13 +14,17 @@ import {
   X,
   AlertCircle,
   CheckCircle,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useProfile } from "../hooks/userProfile";
+import { useUploadAvatarMutation } from "@/store/api/profileApi";
 import { DEPARTMENTS } from "../types/constants/DEPARTMENTS";
 
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [localProfile, setLocalProfile] = useState({
     name: "",
     email: "",
@@ -42,6 +45,8 @@ export default function Profile() {
     updateProfile,
     isProfileComplete,
   } = useProfile();
+
+  const [uploadAvatar] = useUploadAvatarMutation();
 
   // Initialize local state with profile data
   useEffect(() => {
@@ -90,9 +95,16 @@ export default function Profile() {
 
   const handleAvatarUpload = async (file: File) => {
     const formData = new FormData();
-    formData.append('avatar', file);
-    // You can implement avatar upload here
-    console.debug('Uploading avatar:', file.name);
+    formData.append("avatar", file);
+    setIsUploadingAvatar(true);
+    try {
+      await uploadAvatar(formData).unwrap();
+      toast.success("Avatar updated successfully");
+    } catch {
+      toast.error("Failed to upload avatar. Please try again.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const getInitials = () => {
@@ -195,17 +207,24 @@ export default function Profile() {
                     getInitials()
                   )}
                 </div>
-                <label className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors cursor-pointer">
+                <label
+                  className={`absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full transition-colors ${isUploadingAvatar ? "opacity-60 cursor-not-allowed" : "hover:bg-primary/90 cursor-pointer"}`}
+                >
                   <input
                     type="file"
                     className="hidden"
                     accept="image/*"
+                    disabled={isUploadingAvatar}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleAvatarUpload(file);
                     }}
                   />
-                  <Camera size={18} />
+                  {isUploadingAvatar ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Camera size={18} />
+                  )}
                 </label>
               </div>
 

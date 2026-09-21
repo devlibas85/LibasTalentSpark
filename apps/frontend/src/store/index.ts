@@ -3,7 +3,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
 import authReducer from "./slice/authSlice";
-import profileReducer from "../store/slice/profileSlice";
+import profileReducer from "./slice/profileSlice";
 import { jobFormReducer } from "./slice/jobFormSlice";
 
 import { jobApi } from "./api/jobApi";

@@ -5,15 +5,7 @@ export const jobApi = createApi({
   reducerPath: "jobApi",
   baseQuery: fetchBaseQuery({
     baseUrl: "/api",
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("auth_token");
-
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-
-      return headers;
-    },
+    credentials: "include",
   }),
   tagTypes: ["Job"],
   endpoints: (builder) => ({
