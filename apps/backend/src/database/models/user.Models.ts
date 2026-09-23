@@ -18,8 +18,8 @@ export interface UserSchemaType {
   providerId?: string;
   password?: string;
 
-  otp?: string;
-  otpExpiresAt?: Date;
+  otp?: string | undefined;
+  otpExpiresAt?: Date | undefined;
   otpAttempts: number;
   isOtpVerified: boolean;
 

@@ -4,6 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
+  // The repo has a single .env at the root; only VITE_* keys from it are
+  // exposed to the browser bundle.
+  envDir: path.resolve(__dirname, "../.."),
   plugins: [
     react(),
     tailwindcss(),

@@ -2,11 +2,13 @@ import { env } from "../config/env.js";
 import passport from "passport";
 import { OIDCStrategy } from "passport-azure-ad";
 
-console.log("STRATEGY SEES:", {
-  AZURE_CLIENT_ID: env.azureClientId,
-  AZURE_TENANT_ID: env.azureTenantId,
-  HAS_SECRET: !!env.azureClientSecret,
-});
+if (env.nodeEnv !== "production") {
+  console.log("STRATEGY SEES:", {
+    AZURE_CLIENT_ID: env.azureClientId,
+    AZURE_TENANT_ID: env.azureTenantId,
+    HAS_SECRET: !!env.azureClientSecret,
+  });
+}
 
 type MicrosoftProfile = {
   displayName?: string;
@@ -25,7 +27,9 @@ passport.use(
       clientSecret: env.azureClientSecret,
       responseType: "code",
       responseMode: "query",
-      redirectUrl: "http://localhost:4000/auth/microsoft/callback",
+      // Must match a Web redirect URI on the app registration AND the mounted
+      // route (app.ts mounts the auth router under /api/auth).
+      redirectUrl: `${env.backendUrl}/api/auth/microsoft/callback`,
       allowHttpForRedirectUrl: true,
       scope: ["openid", "profile", "email", "User.Read"],
       passReqToCallback: false,

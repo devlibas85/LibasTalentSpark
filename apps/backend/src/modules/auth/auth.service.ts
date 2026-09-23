@@ -110,14 +110,20 @@ export class AuthService {
     const hashedOtp = await bcrypt.hash(otp, 10);
     const expiry = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
-    await this.authRepository.createOrUpdateUser(email, {
+    await this.authRepository.createOrUpdateUser(
       email,
-      provider: "email",
-      otp: hashedOtp,
-      otpExpiresAt: expiry,
-      otpAttempts: 0,
-      isOtpVerified: false,
-    });
+      {
+        email,
+        provider: "email",
+        otp: hashedOtp,
+        otpExpiresAt: expiry,
+        otpAttempts: 0,
+        isOtpVerified: false,
+      },
+      // Seeded only on insert: `name` is a required path, and an existing
+      // user's real name must not be overwritten by this derived one.
+      { name: this.getNameFromEmail(email) },
+    );
 
     if (purpose === "signup") {
       const name = this.getNameFromEmail(email);
@@ -183,7 +189,7 @@ export class AuthService {
     }
 
     user.password = password;
-    user.name = name || "User";
+    user.name = name || user.name || this.getNameFromEmail(email);
     user.provider = "email";
     user.isOtpVerified = false;
     user.lastLoginAt = new Date();
@@ -269,12 +275,22 @@ export class AuthService {
       throw new Error("Incorrect OTP");
     }
 
-    // OTP is valid — update password and clear OTP fields
+    // OTP is valid — update password and burn the OTP so it cannot be reused.
+    // `delete user.otp` does NOT work here: mongoose keeps schema paths in
+    // _doc behind prototype accessors, so the delete silently no-ops and the
+    // OTP stays valid for its full window. Assigning undefined unsets it.
     user.password = password;
     user.isOtpVerified = false;
     user.otpAttempts = 0;
-    delete user.otp;
-    delete user.otpExpiresAt;
+    user.otp = undefined;
+    user.otpExpiresAt = undefined;
+
+    // send-otp upserts users through findOneAndUpdate, which does not run
+    // validators — so a user who never completed signup has no `name`, and a
+    // bare save() would fail required-path validation on an unrelated field.
+    if (!user.name) {
+      user.name = this.getNameFromEmail(user.email);
+    }
 
     await this.authRepository.saveUser(user);
   }

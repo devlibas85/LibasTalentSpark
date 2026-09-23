@@ -12,13 +12,21 @@ export class AuthRepository {
     return await User.findById(id).select("_id name email role isActive");
   }
 
+  /**
+   * Upsert by email. `insertOnly` fields are applied ONLY when the document is
+   * created, which is how required schema paths (e.g. `name`) get seeded
+   * without clobbering a real value on an existing user. findOneAndUpdate does
+   * not run validators, so anything the schema requires must be set here or a
+   * later document.save() will fail on it.
+   */
   async createOrUpdateUser(
     email: string,
     updateData: Partial<UserDocument>,
+    insertOnly: Partial<UserDocument> = {},
   ): Promise<UserDocument> {
     return await User.findOneAndUpdate(
       { email },
-      { ...updateData, email },
+      { $set: { ...updateData, email }, $setOnInsert: insertOnly },
       { upsert: true, new: true },
     );
   }

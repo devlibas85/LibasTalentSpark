@@ -255,6 +255,12 @@ export const resetPassword = async (req: Request, res: Response) => {
     if (error.message === "User not found") {
       return res.status(404).json({ message: "User not found" });
     }
+    if (error.message === "Invalid OTP request") {
+      return res.status(400).json({ message: "Invalid OTP request" });
+    }
+    if (error.message === "Too many failed attempts. Request new OTP.") {
+      return res.status(429).json({ message: error.message });
+    }
 
     res.status(500).json({ message: "Password reset failed" });
   }

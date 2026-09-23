@@ -16,8 +16,19 @@ services:
     container_name: libas-backend
     ports:
       - "5555:4000"
+    # The single root .env supplies every backend variable.
     env_file:
       - .env
+    environment:
+      # Overrides for the containerised ports (the .env holds local-dev URLs).
+      # These must also be registered as redirect URIs on the Azure app.
+      FRONTEND_URL: http://localhost:7777
+      BACKEND_URL: http://localhost:5555
+      # NODE_ENV stays as the .env sets it. Only set it to `production` once
+      # this is served over HTTPS: setAuthCookie() switches the auth cookie to
+      # secure:true, which a browser silently drops over plain http, and CORS
+      # starts rejecting origin-less requests.
+      # NODE_ENV: production
     volumes:
       - ./apps/backend/src/uploads:/app/apps/backend/src/uploads
     depends_on:
